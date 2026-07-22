@@ -1,0 +1,135 @@
+<div class="modal-backdrop" *ngIf="contactService.isModalOpen()" (click)="closeModal()">
+  <div class="modal-container" (click)="$event.stopPropagation()" role="dialog" aria-labelledby="modal-title" aria-modal="true">
+
+    <!-- MODAL HEADER -->
+    <div class="modal-header">
+      <div class="header-title-group">
+        <span class="header-badge">Propuesta laboral & Contacto</span>
+        <h2 id="modal-title" class="modal-title">Let´s talk / Hablemos</h2>
+        <p class="modal-subtitle">
+          Destinatario directo: <strong>{{ contactService.targetEmail }}</strong>
+        </p>
+      </div>
+      <button class="modal-close" (click)="closeModal()" aria-label="Cerrar modal">&times;</button>
+    </div>
+
+    <!-- MODAL BODY -->
+    <div class="modal-body">
+
+      <!-- SUCCESS STATE -->
+      <div *ngIf="submitSuccess()" class="state-success">
+        <div class="success-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+        </div>
+        <h3>¡Mensaje Enviado con Éxito!</h3>
+        <p>Gracias por tu propuesta. He recibido tu correo en <strong>{{ contactService.targetEmail }}</strong> y te responderé lo antes posible.</p>
+        <button class="btn-primary" (click)="closeModal()">Entendido</button>
+      </div>
+
+      <!-- FORM STATE -->
+      <form *ngIf="!submitSuccess()" [formGroup]="contactForm" (ngSubmit)="onSubmit()" class="contact-form">
+
+        <!-- ERROR ALERT -->
+        <div *ngIf="submitErrorMessage()" class="error-alert">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="8" x2="12" y2="12"/>
+            <line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+          <span>{{ submitErrorMessage() }}</span>
+        </div>
+
+        <div class="form-row">
+          <!-- NAME -->
+          <div class="form-group">
+            <label for="modal-name">Tu nombre *</label>
+            <input id="modal-name" type="text" formControlName="name" placeholder="Ej. Carlos Rodríguez" />
+            <span *ngIf="contactForm.get('name')?.invalid && contactForm.get('name')?.touched" class="field-error">
+              El nombre es requerido.
+            </span>
+          </div>
+
+          <!-- EMAIL -->
+          <div class="form-group">
+            <label for="modal-email">Tu correo electrónico *</label>
+            <input id="modal-email" type="email" formControlName="email" placeholder="ejemplo@empresa.com" />
+            <span *ngIf="contactForm.get('email')?.invalid && contactForm.get('email')?.touched" class="field-error">
+              Ingresa un correo electrónico válido.
+            </span>
+          </div>
+        </div>
+
+        <!-- SUBJECT -->
+        <div class="form-group">
+          <label for="modal-subject">Asunto *</label>
+          <input id="modal-subject" type="text" formControlName="subject" placeholder="Propuesta de trabajo" />
+          <span *ngIf="contactForm.get('subject')?.invalid && contactForm.get('subject')?.touched" class="field-error">
+            El asunto es requerido.
+          </span>
+        </div>
+
+        <!-- MESSAGE -->
+        <div class="form-group">
+          <label for="modal-message">Mensaje / Detalle de la propuesta *</label>
+          <textarea id="modal-message" formControlName="message" rows="4" placeholder="Cuéntame sobre el rol, proyecto o detalles de tu propuesta..."></textarea>
+          <span *ngIf="contactForm.get('message')?.invalid && contactForm.get('message')?.touched" class="field-error">
+            El mensaje debe contener al menos 10 caracteres.
+          </span>
+        </div>
+
+        <!-- FILE ATTACHMENTS DROPZONE -->
+        <div class="form-group">
+          <label>Adjuntar imágenes o archivos (opcional)</label>
+          <div
+            class="dropzone"
+            [class.drag-over]="dragOver()"
+            (drop)="onFileDrop($event)"
+            (dragover)="onDragOver($event)"
+            (dragleave)="onDragLeave($event)"
+            (click)="fileInput.click()"
+          >
+            <input #fileInput type="file" multiple (change)="onFileSelected($event)" class="file-input-hidden" />
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="upload-icon">
+              <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+              <polyline points="17 8 12 3 7 8"/>
+              <line x1="12" y1="3" x2="12" y2="15"/>
+            </svg>
+            <p class="dropzone-text">Arrastra y suelta tus archivos aquí o <span>haz clic para explorar</span></p>
+            <span class="dropzone-hint">Soporta imágenes, PDF, documentos de Word, etc.</span>
+          </div>
+
+          <!-- SELECTED FILES LIST -->
+          <div *ngIf="selectedFiles.length > 0" class="files-list">
+            <div *ngFor="let file of selectedFiles; let i = index" class="file-chip">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="file-icon">
+                <path d="M13 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V9z"/>
+                <polyline points="13 2 13 9 20 9"/>
+              </svg>
+              <div class="file-info">
+                <span class="file-name">{{ file.name }}</span>
+                <span class="file-size">{{ formatFileSize(file.size) }}</span>
+              </div>
+              <button type="button" class="remove-file-btn" (click)="removeFile(i); $event.stopPropagation()" aria-label="Eliminar archivo">&times;</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- MODAL ACTIONS -->
+        <div class="modal-footer">
+          <button type="button" class="btn-cancel" (click)="closeModal()" [disabled]="isSubmitting()">Cancelar</button>
+          <button type="submit" class="btn-submit" [disabled]="contactForm.invalid || isSubmitting()">
+            <span *ngIf="!isSubmitting()">Enviar Mensaje a Backend</span>
+            <span *ngIf="isSubmitting()" class="spinner-group">
+              <span class="spinner"></span>
+              Enviando propuesta...
+            </span>
+          </button>
+        </div>
+
+      </form>
+    </div>
+
+  </div>
+</div>

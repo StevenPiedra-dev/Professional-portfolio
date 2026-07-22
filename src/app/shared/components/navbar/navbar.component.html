@@ -1,0 +1,46 @@
+<nav class="navbar" [class.scrolled]="isScrolled()" role="navigation" aria-label="Navegación principal">
+  <div class="nav-container">
+
+    <!-- BRAND LOGO & TITLE -->
+    <a class="nav-brand" routerLink="/" (click)="closeMenu()" aria-label="Steven Piedra Villalta - Inicio">
+      <div class="logo-wrapper">
+        <img src="assets/sp-logo.svg" alt="SP Logo" class="brand-img" />
+      </div>
+      <div class="brand-text">
+        <span class="brand-name">Steven Piedra Villalta</span>
+        <span class="brand-subtitle">Fullstack Developer | IA Developer | Product Manager</span>
+      </div>
+    </a>
+
+    <!-- MOBILE HAMBURGER BUTTON -->
+    <button class="menu-toggle" (click)="toggleMenu()" [attr.aria-expanded]="isMenuOpen()" aria-label="Abrir menú de navegación">
+      <span class="hamburger" [class.active]="isMenuOpen()"></span>
+    </button>
+
+    <!-- NAVIGATION MENU LINKS -->
+    <div class="nav-menu" [class.open]="isMenuOpen()">
+      <ul class="nav-links" role="list">
+        <li *ngFor="let link of navLinks" role="listitem">
+          <a
+            class="nav-link"
+            [routerLink]="link.path"
+            routerLinkActive="active"
+            [routerLinkActiveOptions]="{ exact: link.path === '/' }"
+            (click)="closeMenu()"
+          >
+            {{ link.label }}
+          </a>
+        </li>
+      </ul>
+
+      <!-- LET'S TALK CTA BUTTON -->
+      <button class="nav-cta" (click)="openContactModal()" aria-label="Abrir formulario de contacto">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="cta-icon">
+          <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
+        </svg>
+        <span>Let´s talk</span>
+      </button>
+    </div>
+
+  </div>
+</nav>

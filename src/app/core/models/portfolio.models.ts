@@ -21,10 +21,17 @@ export interface ContactForm {
   email: string;
   subject: string;
   message: string;
+  files?: File[];
 }
 
 export interface SocialLink {
   platform: string;
   url: string;
   icon: string;
+}
+
+export interface ContactApiResponse {
+  success: boolean;
+  message: string;
+  timestamp?: string;
 }
