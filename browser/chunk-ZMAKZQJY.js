@@ -1,0 +1,1 @@
+import{Ma as o,Q as s}from"./chunk-PLWEFKZS.js";var c=(()=>{class t{constructor(){this.isOpen=o(!1)}openModal(){this.isOpen.set(!0)}closeModal(){this.isOpen.set(!1)}toggleModal(){this.isOpen.update(e=>!e)}static{this.\u0275fac=function(i){return new(i||t)}}static{this.\u0275prov=s({token:t,factory:t.\u0275fac,providedIn:"root"})}}return t})();export{c as a};
