@@ -1,86 +1,151 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, ElementRef, OnInit, OnDestroy, ViewChild, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 interface Particle {
   x: number;
   y: number;
-  size: number;
-  speedX: number;
-  speedY: number;
-  opacity: number;
-  color: string;
+  vx: number;
+  vy: number;
+  radius: number;
+  alpha: number;
 }
 
 @Component({
   selector: 'app-particles',
   standalone: true,
   imports: [CommonModule],
-  template: `
-    <div class="particles-container" aria-hidden="true">
-      <div
-        *ngFor="let p of particles; let i = index"
-        class="particle"
-        [style.left.px]="p.x"
-        [style.top.px]="p.y"
-        [style.width.px]="p.size"
-        [style.height.px]="p.size"
-        [style.opacity]="p.opacity"
-        [style.background]="p.color"
-        [style.animationDelay]="(i * 0.3) + 's'"
-        [style.animationDuration]="(4 + i * 0.5) + 's'"
-      ></div>
-    </div>
-  `,
+  template: `<canvas #canvas class="particles-canvas"></canvas>`,
   styles: [`
-    .particles-container {
+    .particles-canvas {
       position: absolute;
-      inset: 0;
-      overflow: hidden;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
       pointer-events: none;
-      z-index: 0;
-    }
-    .particle {
-      position: absolute;
-      border-radius: 50%;
-      animation: floatParticle ease-in-out infinite alternate;
-    }
-    @keyframes floatParticle {
-      0% { transform: translateY(0) translateX(0) scale(1); }
-      100% { transform: translateY(-40px) translateX(20px) scale(1.2); }
+      z-index: 1;
     }
   `]
 })
-export class ParticlesComponent implements OnInit, OnDestroy {
-  particles: Particle[] = [];
-  private animFrame?: number;
+export class ParticlesComponent implements OnInit, AfterViewInit, OnDestroy {
+  @ViewChild('canvas') canvasRef!: ElementRef<HTMLCanvasElement>;
 
-  private colors = [
-    'rgba(74, 144, 217, 0.15)',
-    'rgba(100, 181, 246, 0.12)',
-    'rgba(147, 197, 253, 0.10)',
-    'rgba(59, 130, 246, 0.08)',
-  ];
+  private ctx!: CanvasRenderingContext2D;
+  private animId?: number;
+  private particles: Particle[] = [];
+  private mouseX = -1000;
+  private mouseY = -1000;
 
-  ngOnInit(): void {
-    this.generateParticles();
+  ngOnInit() {}
+
+  ngAfterViewInit() {
+    const canvas = this.canvasRef.nativeElement;
+    this.ctx = canvas.getContext('2d')!;
+    this.resizeCanvas();
+
+    window.addEventListener('resize', this.onResize);
+    window.addEventListener('mousemove', this.onMouseMove);
+
+    this.initParticles();
+    this.animate();
   }
 
-  ngOnDestroy(): void {
-    if (this.animFrame) cancelAnimationFrame(this.animFrame);
+  ngOnDestroy() {
+    if (this.animId) {
+      cancelAnimationFrame(this.animId);
+    }
+    window.removeEventListener('resize', this.onResize);
+    window.removeEventListener('mousemove', this.onMouseMove);
   }
 
-  private generateParticles(): void {
-    const count = 18;
+  private onResize = () => {
+    this.resizeCanvas();
+    this.initParticles();
+  };
+
+  private onMouseMove = (e: MouseEvent) => {
+    const rect = this.canvasRef.nativeElement.getBoundingClientRect();
+    this.mouseX = e.clientX - rect.left;
+    this.mouseY = e.clientY - rect.top;
+  };
+
+  private resizeCanvas() {
+    const canvas = this.canvasRef.nativeElement;
+    canvas.width = canvas.offsetWidth || window.innerWidth;
+    canvas.height = canvas.offsetHeight || window.innerHeight;
+  }
+
+  private initParticles() {
+    const canvas = this.canvasRef.nativeElement;
+    const count = Math.floor((canvas.width * canvas.height) / 14000);
+    this.particles = [];
+
     for (let i = 0; i < count; i++) {
       this.particles.push({
-        x: Math.random() * window.innerWidth,
-        y: Math.random() * window.innerHeight,
-        size: Math.random() * 60 + 10,
-        speedX: (Math.random() - 0.5) * 0.5,
-        speedY: -(Math.random() * 0.5 + 0.2),
-        opacity: Math.random() * 0.4 + 0.05,
-        color: this.colors[Math.floor(Math.random() * this.colors.length)]
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        vx: (Math.random() - 0.5) * 0.6,
+        vy: (Math.random() - 0.5) * 0.6,
+        radius: Math.random() * 1.8 + 1,
+        alpha: Math.random() * 0.5 + 0.2
       });
     }
   }
+
+  private animate = () => {
+    const canvas = this.canvasRef.nativeElement;
+    this.ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    const maxDist = 120;
+
+    // Update and draw particles
+    for (let i = 0; i < this.particles.length; i++) {
+      const p = this.particles[i];
+      p.x += p.vx;
+      p.y += p.vy;
+
+      if (p.x < 0 || p.x > canvas.width) p.vx *= -1;
+      if (p.y < 0 || p.y > canvas.height) p.vy *= -1;
+
+      // Draw particle dot
+      this.ctx.beginPath();
+      this.ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+      this.ctx.fillStyle = `rgba(96, 165, 250, ${p.alpha})`;
+      this.ctx.fill();
+
+      // Connect with nearby particles
+      for (let j = i + 1; j < this.particles.length; j++) {
+        const p2 = this.particles[j];
+        const dx = p.x - p2.x;
+        const dy = p.y - p2.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+
+        if (dist < maxDist) {
+          const lineAlpha = (1 - dist / maxDist) * 0.2;
+          this.ctx.beginPath();
+          this.ctx.moveTo(p.x, p.y);
+          this.ctx.lineTo(p2.x, p2.y);
+          this.ctx.strokeStyle = `rgba(59, 130, 246, ${lineAlpha})`;
+          this.ctx.lineWidth = 0.8;
+          this.ctx.stroke();
+        }
+      }
+
+      // Connect with mouse cursor
+      const mdx = p.x - this.mouseX;
+      const mdy = p.y - this.mouseY;
+      const mdist = Math.sqrt(mdx * mdx + mdy * mdy);
+      if (mdist < 150) {
+        const mAlpha = (1 - mdist / 150) * 0.4;
+        this.ctx.beginPath();
+        this.ctx.moveTo(p.x, p.y);
+        this.ctx.lineTo(this.mouseX, this.mouseY);
+        this.ctx.strokeStyle = `rgba(96, 165, 250, ${mAlpha})`;
+        this.ctx.lineWidth = 1;
+        this.ctx.stroke();
+      }
+    }
+
+    this.animId = requestAnimationFrame(this.animate);
+  };
 }

@@ -15,9 +15,9 @@ import { ContactModalComponent } from './shared/components/contact-modal/contact
   ],
   template: `
     <app-navbar></app-navbar>
-    <div class="main-layout-content">
+    <main class="main-layout-content">
       <router-outlet></router-outlet>
-    </div>
+    </main>
     <app-footer></app-footer>
     <app-contact-modal></app-contact-modal>
   `,
@@ -25,15 +25,15 @@ import { ContactModalComponent } from './shared/components/contact-modal/contact
     :host {
       display: block;
       min-height: 100vh;
-      background-color: var(--bg-main);
-      color: var(--text-primary);
+      background-color: var(--bg-main, #0B0F17);
+      color: var(--text-primary, #F8FAFC);
     }
     .main-layout-content {
-      padding-top: var(--nav-height);
+      padding-top: var(--nav-height, 80px);
       min-height: calc(100vh - 200px);
     }
   `]
 })
 export class AppComponent {
-  title = 'portfolio-steven-piedra';
+  title = 'Steven Piedra | Portfolio';
 }

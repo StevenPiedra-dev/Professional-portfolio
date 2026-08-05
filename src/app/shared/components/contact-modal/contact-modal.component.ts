@@ -1,94 +1,33 @@
-import { Component, signal } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { ContactService } from '../../../core/services/contact.service';
 
 @Component({
   selector: 'app-contact-modal',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './contact-modal.component.html',
   styleUrls: ['./contact-modal.component.scss']
 })
 export class ContactModalComponent {
-  contactForm: FormGroup;
-  selectedFiles: File[] = [];
-  isSubmitting = signal<boolean>(false);
-  submitSuccess = signal<boolean>(false);
-  submitErrorMessage = signal<string | null>(null);
-  dragOver = signal<boolean>(false);
+  private fb = inject(FormBuilder);
+  public contactService = inject(ContactService);
 
-  constructor(
-    public contactService: ContactService,
-    private fb: FormBuilder
-  ) {
-    this.contactForm = this.fb.group({
-      email: ['', [Validators.required, Validators.email]],
-      name: ['', Validators.required],
-      subject: [this.contactService.defaultSubject, Validators.required],
-      message: ['', [Validators.required, Validators.minLength(10)]]
-    });
-  }
+  isSubmitting = signal(false);
+  submitSuccess = signal(false);
+  errorMessage = signal<string | null>(null);
+
+  contactForm = this.fb.group({
+    name: ['', [Validators.required, Validators.minLength(2)]],
+    email: ['', [Validators.required, Validators.email]],
+    subject: ['Job Proposal'],
+    message: ['', [Validators.required, Validators.minLength(10)]]
+  });
 
   closeModal() {
     this.contactService.closeModal();
     this.resetFormState();
-  }
-
-  resetFormState() {
-    this.contactForm.reset({
-      subject: this.contactService.defaultSubject
-    });
-    this.selectedFiles = [];
-    this.isSubmitting.set(false);
-    this.submitSuccess.set(false);
-    this.submitErrorMessage.set(null);
-  }
-
-  onFileSelected(event: Event) {
-    const input = event.target as HTMLInputElement;
-    if (input.files) {
-      this.addFiles(Array.from(input.files));
-    }
-  }
-
-  onFileDrop(event: DragEvent) {
-    event.preventDefault();
-    this.dragOver.set(false);
-    if (event.dataTransfer?.files) {
-      this.addFiles(Array.from(event.dataTransfer.files));
-    }
-  }
-
-  onDragOver(event: DragEvent) {
-    event.preventDefault();
-    this.dragOver.set(true);
-  }
-
-  onDragLeave(event: DragEvent) {
-    event.preventDefault();
-    this.dragOver.set(false);
-  }
-
-  addFiles(files: File[]) {
-    // Filter duplicates or add new files
-    files.forEach(file => {
-      if (!this.selectedFiles.some(f => f.name === file.name && f.size === file.size)) {
-        this.selectedFiles.push(file);
-      }
-    });
-  }
-
-  removeFile(index: number) {
-    this.selectedFiles.splice(index, 1);
-  }
-
-  formatFileSize(bytes: number): string {
-    if (bytes === 0) return '0 Bytes';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   }
 
   onSubmit() {
@@ -98,26 +37,35 @@ export class ContactModalComponent {
     }
 
     this.isSubmitting.set(true);
-    this.submitErrorMessage.set(null);
+    this.errorMessage.set(null);
 
-    const formValues = {
-      ...this.contactForm.value,
-      files: this.selectedFiles
+    const formData = {
+      name: this.contactForm.value.name || '',
+      email: this.contactForm.value.email || '',
+      subject: this.contactForm.value.subject || 'Job Proposal',
+      message: this.contactForm.value.message || ''
     };
 
-    this.contactService.sendContactMessage(formValues).subscribe({
+    this.contactService.sendMessage(formData).subscribe({
       next: (res) => {
         this.isSubmitting.set(false);
         if (res.success) {
           this.submitSuccess.set(true);
+          this.contactForm.reset({ subject: 'Job Proposal' });
         } else {
-          this.submitErrorMessage.set(res.message || 'Error al enviar el mensaje');
+          this.errorMessage.set(res.message);
         }
       },
-      error: (err) => {
+      error: () => {
         this.isSubmitting.set(false);
-        this.submitErrorMessage.set('Ocurrió un error al contactar al servidor. Por favor intenta de nuevo.');
+        this.errorMessage.set('Could not send email. Please try again or email directly at steven.piedra02@gmail.com.');
       }
     });
+  }
+
+  private resetFormState() {
+    this.submitSuccess.set(false);
+    this.errorMessage.set(null);
+    this.contactForm.reset({ subject: 'Job Proposal' });
   }
 }

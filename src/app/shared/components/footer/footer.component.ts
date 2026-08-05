@@ -16,7 +16,7 @@ export class FooterComponent {
   socialLinks = [
     {
       name: 'GitHub',
-      url: 'https://github.com/StevenPiedra-devv',
+      url: 'https://github.com/StevenPiedra-dev',
       icon: 'github'
     },
     {

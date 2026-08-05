@@ -1,7 +1,7 @@
-import { Component, HostListener, signal } from '@angular/core';
+import { Component, HostListener, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
-import { ContactService } from '../../../core/services/contact.service';
+import { ContactModalService } from '../../../core/services/contact-modal.service';
 
 @Component({
   selector: 'app-navbar',
@@ -11,18 +11,18 @@ import { ContactService } from '../../../core/services/contact.service';
   styleUrls: ['./navbar.component.scss']
 })
 export class NavbarComponent {
+  private modalService = inject(ContactModalService);
+
   isMenuOpen = signal<boolean>(false);
   isScrolled = signal<boolean>(false);
 
   navLinks = [
     { label: 'Home', path: '/' },
     { label: 'About me', path: '/about' },
-    { label: 'All my projects', path: '/projects' },
-    { label: 'My blog', path: '/blog' },
-    { label: 'My contacts', path: '/contacts' }
+    { label: 'Projects', path: '/projects' },
+    { label: 'Blog', path: '/blog' },
+    { label: 'Contact', path: '/contacts' }
   ];
-
-  constructor(public contactService: ContactService) {}
 
   @HostListener('window:scroll', [])
   onWindowScroll() {
@@ -39,6 +39,6 @@ export class NavbarComponent {
 
   openContactModal() {
     this.closeMenu();
-    this.contactService.openModal();
+    this.modalService.openModal();
   }
 }

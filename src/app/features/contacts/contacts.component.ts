@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ContactService } from '../../core/services/contact.service';
 
@@ -9,27 +9,27 @@ import { ContactService } from '../../core/services/contact.service';
   template: `
     <main class="subpage-container">
       <div class="subpage-header">
-        <span class="subpage-badge">Contacto</span>
-        <h1>My contacts</h1>
-        <p class="subpage-subtitle">¿Tienes una propuesta o proyecto en mente? ¡Conéctate conmigo!</p>
+        <span class="subpage-badge">Get In Touch</span>
+        <h1>My Contacts</h1>
+        <p class="subpage-subtitle">Have a project, job proposal, or opportunity in mind? Feel free to reach out!</p>
 
         <div class="contacts-card">
           <div class="contact-item">
-            <span class="label">Email de contacto:</span>
+            <span class="label">Contact Email:</span>
             <a [href]="'mailto:' + email" class="link">{{ email }}</a>
           </div>
           <div class="contact-item">
-            <span class="label">LinkedIn:</span>
+            <span class="label">LinkedIn Profile:</span>
             <a href="https://www.linkedin.com/in/stevenpiedra/" target="_blank" class="link">linkedin.com/in/stevenpiedra</a>
           </div>
           <div class="contact-item">
-            <span class="label">GitHub:</span>
-            <a href="https://github.com/StevenPiedra-devv" target="_blank" class="link">github.com/StevenPiedra-devv</a>
+            <span class="label">GitHub Profile:</span>
+            <a href="https://github.com/StevenPiedra-dev" target="_blank" class="link">github.com/StevenPiedra-dev</a>
           </div>
 
           <div class="card-action">
             <button (click)="openContactModal()" class="btn-primary">
-              Enviar propuesta directa via "Let's talk"
+              Send Direct Message via "Let's Talk"
             </button>
           </div>
         </div>
@@ -86,6 +86,8 @@ import { ContactService } from '../../core/services/contact.service';
         font-weight: 600;
         box-shadow: 0 4px 15px rgba(59, 130, 246, 0.35);
         cursor: pointer;
+        border: none;
+        transition: transform 0.2s ease;
         &:hover { transform: translateY(-2px); }
       }
     }
@@ -93,8 +95,7 @@ import { ContactService } from '../../core/services/contact.service';
 })
 export class ContactsComponent {
   email = 'steven.piedra02@gmail.com';
-
-  constructor(private contactService: ContactService) {}
+  private contactService = inject(ContactService);
 
   openContactModal() {
     this.contactService.openModal();
