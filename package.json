@@ -9,7 +9,7 @@
     "build:prod": "ng build --configuration production --base-href /Professional-portfolio/",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
-    "deploy": "ng deploy --base-href=/Professional-portfolio/"
+    "deploy": "ng build --configuration production --base-href /Professional-portfolio/ && npx angular-cli-ghpages --dir=dist/portfolio-steven-piedra/browser"
   },
   "private": true,
   "dependencies": {
