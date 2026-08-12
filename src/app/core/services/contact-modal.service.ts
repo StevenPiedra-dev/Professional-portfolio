@@ -1,20 +1,29 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
+import { ContactService } from './contact.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ContactModalService {
-  isOpen = signal<boolean>(false);
+  private contactService = inject(ContactService);
 
-  openModal() {
-    this.isOpen.set(true);
+  get isOpen() {
+    return this.contactService.isOpen;
+  }
+
+  openModal(subject?: string) {
+    this.contactService.openModal(subject);
   }
 
   closeModal() {
-    this.isOpen.set(false);
+    this.contactService.closeModal();
   }
 
   toggleModal() {
-    this.isOpen.update(val => !val);
+    if (this.contactService.isOpen()) {
+      this.contactService.closeModal();
+    } else {
+      this.contactService.openModal();
+    }
   }
 }

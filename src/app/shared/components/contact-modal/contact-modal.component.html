@@ -11,9 +11,11 @@
 
     <!-- HEADER -->
     <div class="modal-header">
-      <span class="badge">Get in Touch</span>
-      <h2>Let's Work Together</h2>
-      <p>Have a project in mind, an opportunity, or want to discuss AI & Full Stack development?</p>
+      <div class="header-text">
+        <span class="badge">Get in Touch</span>
+        <h2>Let's Work <span class="gradient-title">Together</span></h2>
+        <p>Have a project in mind, an opportunity, or want to discuss AI &amp; Full Stack development?</p>
+      </div>
     </div>
 
     <!-- SUCCESS STATE -->
@@ -23,9 +25,12 @@
           <polyline points="20 6 9 17 4 12"></polyline>
         </svg>
       </div>
-      <h3>Message Sent!</h3>
+      <h3>Message Sent! 🎉</h3>
       <p>Thank you for getting in touch. I will respond to your email as soon as possible.</p>
-      <button class="btn btn-primary" (click)="closeModal()">Close</button>
+      <div class="success-actions">
+        <button class="btn btn-secondary" (click)="resetFormState()">Send Another Message</button>
+        <button class="btn btn-primary" (click)="closeModal()">Close</button>
+      </div>
     </div>
 
     <!-- FORM -->

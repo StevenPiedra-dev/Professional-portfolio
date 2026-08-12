@@ -56,47 +56,42 @@ interface ValueCard {
           </div>
 
           <div class="bio-col">
-            <span class="badge">Sobre mí</span>
+            <span class="badge">About me</span>
             <h1>Steven <span class="gradient-text">Piedra Villalta</span></h1>
             <p class="bio-roles">
               <span class="role-chip">⚡ Full Stack Developer</span>
-              <span class="role-chip">🤖 AI Developer</span>
-              <span class="role-chip">🎯 Product Manager</span>
+              <span class="role-chip">📊 Data Analyst</span>
             </p>
             <p class="bio-text">
-              Desarrollador Full Stack apasionado por construir soluciones de software escalables, inteligentes y orientadas al usuario.
-              Con más de <strong>3 años de experiencia</strong> en el sector tecnológico, combino habilidades técnicas avanzadas con
-              una visión de producto sólida para entregar soluciones que generan impacto real.
+              Data Analyst and Full Stack Developer with experience in data analysis and full-stack development. Experienced in data collection and quantitative and qualitative analysis, using tools such as <strong>SQL, Python, Power BI, Tableau, and Excel</strong>. 
             </p>
             <p class="bio-text">
-              Especializado en <strong>Angular, Python y arquitecturas cloud</strong>, trabajo en la intersección entre el desarrollo
-              backend robusto y frontends modernos con experiencias de usuario excepcionales. Mi enfoque en IA me permite integrar
-              capacidades inteligentes en productos que hacen la diferencia.
+              Experienced in payment methods and emerging technologies, as well as tools such as <strong>.NET Core, React, REST API, Microservices, Azure Database, and MySQL</strong>. Deeply passionate about data and how technology enhances business performance and enables more efficient delivery.
             </p>
 
             <div class="bio-metrics">
               <div class="bio-metric">
                 <span class="metric-num">3+</span>
-                <span class="metric-label">Años de experiencia</span>
+                <span class="metric-label">Years of Experience</span>
               </div>
               <div class="bio-divider"></div>
               <div class="bio-metric">
                 <span class="metric-num">15+</span>
-                <span class="metric-label">Tecnologías</span>
+                <span class="metric-label">Technologies</span>
               </div>
               <div class="bio-divider"></div>
               <div class="bio-metric">
                 <span class="metric-num">10+</span>
-                <span class="metric-label">Proyectos completados</span>
+                <span class="metric-label">Completed Projects</span>
               </div>
             </div>
 
             <div class="bio-actions">
               <a href="https://github.com/StevenPiedra-dev" target="_blank" rel="noopener" class="btn-primary">
-                Ver GitHub
+                View GitHub
               </a>
               <a href="mailto:steven.piedra02@gmail.com" class="btn-outline">
-                Contáctame
+                Contact Me
               </a>
             </div>
           </div>
@@ -120,9 +115,9 @@ interface ValueCard {
       <section class="skills-section">
         <div class="section-container">
           <div class="section-head">
-            <span class="section-badge">Habilidades técnicas</span>
-            <h2 class="section-title">Stack & Competencias</h2>
-            <p class="section-subtitle">Un vistazo detallado de las tecnologías que utilizo en mi día a día.</p>
+            <span class="section-badge">Technical Skills</span>
+            <h2 class="section-title">Stack & Competencies</h2>
+            <p class="section-subtitle">A detailed look at the technologies I use on a daily basis.</p>
           </div>
 
           <!-- Category Filter -->
@@ -162,11 +157,11 @@ interface ValueCard {
           <!-- Charts Row -->
           <div class="charts-row">
             <app-chart-donut
-              title="Distribución del stack"
+              title="Stack Distribution"
               [segments]="donutSegments()"
             ></app-chart-donut>
             <app-chart-bar
-              title="Top habilidades"
+              title="Top Skills"
               [data]="barData()"
             ></app-chart-bar>
           </div>
@@ -177,9 +172,9 @@ interface ValueCard {
       <section class="timeline-section">
         <div class="section-container">
           <div class="section-head">
-            <span class="section-badge">Trayectoria</span>
-            <h2 class="section-title">Experiencia & Formación</h2>
-            <p class="section-subtitle">Mi camino profesional y académico hasta hoy.</p>
+            <span class="section-badge">Journey</span>
+            <h2 class="section-title">Experience & Education</h2>
+            <p class="section-subtitle">My professional and academic path so far.</p>
           </div>
 
           <div class="timeline">
@@ -217,8 +212,8 @@ interface ValueCard {
       <section class="certs-section">
         <div class="section-container">
           <div class="section-head">
-            <span class="section-badge">Formación</span>
-            <h2 class="section-title">Certificaciones & Educación</h2>
+            <span class="section-badge">Education</span>
+            <h2 class="section-title">Certifications & Education</h2>
           </div>
           <div class="certs-grid">
             <div class="cert-card" *ngFor="let cert of certifications">
@@ -238,15 +233,15 @@ interface ValueCard {
       <section class="about-cta">
         <div class="cta-inner">
           <div class="cta-text">
-            <h2>¿Listo para colaborar?</h2>
-            <p>Abierto a oportunidades de trabajo, proyectos freelance y colaboraciones.</p>
+            <h2>Ready to collaborate?</h2>
+            <p>Open to job opportunities, freelance projects, and collaborations.</p>
           </div>
           <div class="cta-actions">
             <a href="mailto:steven.piedra02@gmail.com" class="cta-btn primary">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-              Enviar mensaje
+              Send Message
             </a>
-            <a [routerLink]="['/projects']" class="cta-btn secondary">Ver proyectos →</a>
+            <a [routerLink]="['/projects']" class="cta-btn secondary">View Projects →</a>
           </div>
         </div>
       </section>
@@ -922,17 +917,17 @@ interface ValueCard {
       padding: 0.2rem 0.6rem;
       border-radius: 100px;
 
-      &.Avanzado {
+      &.Expert, &.Advanced, &.Completed {
         color: #60A5FA;
         background: rgba(96,165,250,0.12);
         border: 1px solid rgba(96,165,250,0.25);
       }
-      &.Intermedio {
+      &.Intermediate, &.In-Progress {
         color: #34D399;
         background: rgba(52,211,153,0.12);
         border: 1px solid rgba(52,211,153,0.25);
       }
-      &.Básico {
+      &.Basic {
         color: #FBBF24;
         background: rgba(251,191,36,0.12);
         border: 1px solid rgba(251,191,36,0.25);
@@ -1021,87 +1016,74 @@ export class AboutComponent implements OnInit {
   barData = signal<BarData[]>([]);
 
   skillCategories = [
-    { id: 'all', label: 'Todos', icon: '🗂️' },
+    { id: 'all', label: 'All', icon: '🗂️' },
     { id: 'frontend', label: 'Frontend', icon: '🎨' },
     { id: 'backend', label: 'Backend', icon: '⚙️' },
     { id: 'databases', label: 'Databases', icon: '🗄️' },
     { id: 'cloud', label: 'Cloud', icon: '☁️' },
-    { id: 'methodologies', label: 'Métodos', icon: '🎯' }
+    { id: 'methodologies', label: 'Methods', icon: '🎯' }
   ];
 
   values: ValueCard[] = [
     {
       icon: '🏗️',
-      title: 'Código limpio',
-      description: 'Priorizo código mantenible, escalable y bien documentado siguiendo principios SOLID y Clean Architecture.'
+      title: 'Clean Code',
+      description: 'I prioritize maintainable, scalable, and well-documented code following SOLID principles and Clean Architecture.'
     },
     {
       icon: '🚀',
-      title: 'Entrega continua',
-      description: 'Metodologías ágiles y CI/CD para entregar valor de forma rápida e incremental al cliente.'
+      title: 'Continuous Delivery',
+      description: 'Agile methodologies and CI/CD to deliver value quickly and incrementally to the client.'
     },
     {
       icon: '🤖',
-      title: 'Impulsado por IA',
-      description: 'Integro capacidades de IA para construir soluciones inteligentes que resuelven problemas complejos.'
+      title: 'AI-Driven',
+      description: 'I integrate AI capabilities to build intelligent solutions that solve complex problems.'
     },
     {
       icon: '👥',
-      title: 'Colaboración',
-      description: 'Creo en el trabajo en equipo, la comunicación abierta y el crecimiento colectivo para lograr grandes metas.'
+      title: 'Collaboration',
+      description: 'I believe in teamwork, open communication, and collective growth to achieve great goals.'
     }
   ];
 
   timeline: TimelineEvent[] = [
     {
-      year: '2025',
-      period: 'Actualidad',
-      role: 'Full Stack Developer & AI Engineer',
-      company: 'Proyectos independientes',
-      description: 'Desarrollo de soluciones Full Stack con Angular y Python. Integración de LLMs y RAG en productos de software empresarial.',
-      tags: ['Angular', 'Python', 'FastAPI', 'OpenAI', 'Docker'],
-      icon: '⚡',
-      type: 'work'
-    },
-    {
       year: '2024',
-      period: '2024',
-      role: 'Desarrollador Web Junior',
-      company: 'Empresa de tecnología',
-      description: 'Desarrollo de aplicaciones web con Angular y .NET Core. Implementación de APIs REST y módulos de gestión empresarial.',
-      tags: ['Angular', 'C#', '.NET', 'SQL Server', 'Azure'],
-      icon: '💼',
+      period: 'Oct 2024 - Present',
+      role: 'Investigation Analyst I',
+      company: 'BAC, Calle Blancos',
+      description: 'Experience using data analysis tools in the financial field and creating executive presentations for senior management and vice presidents. Experience in quantitative and qualitative analysis of Fintechs and payment methods in general. Experience with emerging technologies and businesses that generate new revenue streams for the organization.',
+      tags: ['Data Analysis', 'Fintech', 'Presentations'],
+      icon: '📊',
       type: 'work'
     },
     {
       year: '2023',
-      period: '2023',
-      role: 'Product Manager & Frontend Dev',
-      company: 'Startup SaaS',
-      description: 'Gestión de roadmap de producto, priorización de backlog y desarrollo de interfaces de usuario con React.',
-      tags: ['React', 'Scrum', 'Figma', 'Firebase', 'TypeScript'],
-      icon: '🎯',
+      period: 'Jun 2023 - Sep 2024',
+      role: 'Critical Processes Assistant',
+      company: 'BAC, Curridabat',
+      description: 'I created and managed dashboards in Power BI and Tableau, managed processes with large amounts of data (data acquisition, transformation, and loading). I prepared presentations for senior executives and provided management support.',
+      tags: ['Power BI', 'Tableau', 'Data Transformation'],
+      icon: '📈',
       type: 'work'
     },
     {
       year: '2022',
-      period: '2019 – 2023',
-      role: 'Ingeniería en Computación',
-      company: 'Universidad / Instituto Tecnológico',
-      description: 'Formación en ciencias de la computación, algoritmos, estructuras de datos, bases de datos y desarrollo de software.',
-      tags: ['Algoritmos', 'POO', 'SQL', 'Redes', 'Ingeniería de Software'],
-      icon: '🎓',
-      type: 'education'
+      period: 'Jan 2022 - Jan 2023',
+      role: 'Fullstack Developer',
+      company: 'Freelance, San Pedro',
+      description: 'Developing using .NetCore, Azure Database as backend and React as the framework, the project was developed implementing RESTful APIs, authentication modules, and relational database models. Delivered production-ready deployment and user training.',
+      tags: ['.NET Core', 'Azure', 'React', 'REST API'],
+      icon: '💻',
+      type: 'work'
     }
   ];
 
   certifications = [
-    { icon: '📘', name: 'Angular Developer Certification', issuer: 'Angular Official / Udemy', year: '2024', level: 'Avanzado' },
-    { icon: '🐍', name: 'Python for Data Science & AI', issuer: 'IBM / Coursera', year: '2024', level: 'Intermedio' },
-    { icon: '☁️', name: 'Azure Fundamentals AZ-900', issuer: 'Microsoft', year: '2024', level: 'Básico' },
-    { icon: '🤖', name: 'Prompt Engineering & LLMs', issuer: 'DeepLearning.AI', year: '2025', level: 'Avanzado' },
-    { icon: '⚛️', name: 'React + Next.js Avanzado', issuer: 'Udemy', year: '2023', level: 'Avanzado' },
-    { icon: '🎯', name: 'Professional Scrum Master I', issuer: 'Scrum.org', year: '2023', level: 'Intermedio' }
+    { icon: '🎓', name: 'Professional MBA with an emphasis in Management', issuer: 'Universidad de Costa Rica (UCR)', year: 'Sep 2025 - Present', level: 'In-Progress' },
+    { icon: '📊', name: 'Big Data Specialization', issuer: 'Universidad Fidélitas', year: 'Jan 2022 - May 2023', level: 'Completed' },
+    { icon: '💻', name: 'Bachelor’s Degree in Systems Engineering', issuer: 'Universidad Fidélitas', year: 'Jan 2020 - Sep 2023', level: 'Completed' }
   ];
 
   filteredSkills() {
@@ -1133,10 +1115,10 @@ export class AboutComponent implements OnInit {
   }
 
   getLevelLabel(level: number): string {
-    if (level >= 80) return 'Experto';
-    if (level >= 65) return 'Avanzado';
-    if (level >= 50) return 'Intermedio';
-    return 'Básico';
+    if (level >= 80) return 'Expert';
+    if (level >= 65) return 'Advanced';
+    if (level >= 50) return 'Intermediate';
+    return 'Basic';
   }
 
   getLevelColor(level: number): string {

@@ -6,10 +6,12 @@
     "ng": "ng",
     "start": "ng serve",
     "build": "ng build",
+    "build:vercel": "ng build --configuration production",
     "build:prod": "ng build --configuration production --base-href /Professional-portfolio/",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
-    "deploy": "ng build --configuration production --base-href /Professional-portfolio/ && npx angular-cli-ghpages --dir=dist/portfolio-steven-piedra/browser"
+    "deploy": "ng build --configuration production --base-href /Professional-portfolio/ && npx angular-cli-ghpages --dir=dist/portfolio-steven-piedra/browser",
+    "deploy:vercel": "vercel --prod --yes"
   },
   "private": true,
   "dependencies": {

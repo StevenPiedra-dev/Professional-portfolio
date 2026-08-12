@@ -5,7 +5,7 @@ import { RouterModule } from '@angular/router';
 // Services
 import { PortfolioService } from '../../core/services/portfolio.service';
 import { GithubService } from '../../core/services/github.service';
-import { ContactModalService } from '../../core/services/contact-modal.service';
+import { ContactService } from '../../core/services/contact.service';
 
 // Models
 import { Project, Skill, GitHubProfile, GitHubRepo, GitHubEvent } from '../../core/models/portfolio.models';
@@ -41,7 +41,7 @@ import { ProjectCardComponent } from '../../shared/components/project-card/proje
 export class HomeComponent implements OnInit {
   private portfolioService = inject(PortfolioService);
   private githubService = inject(GithubService);
-  private modalService = inject(ContactModalService);
+  private contactService = inject(ContactService);
 
   // Data signals
   skills = signal<Skill[]>([]);
@@ -152,7 +152,7 @@ export class HomeComponent implements OnInit {
   }
 
   openContactModal() {
-    this.modalService.openModal();
+    this.contactService.openModal();
   }
 
   private prepareChartData(skillsList: Skill[]) {

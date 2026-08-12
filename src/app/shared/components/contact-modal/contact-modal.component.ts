@@ -46,24 +46,35 @@ export class ContactModalComponent {
       message: this.contactForm.value.message || ''
     };
 
-    this.contactService.sendMessage(formData).subscribe({
-      next: (res) => {
-        this.isSubmitting.set(false);
-        if (res.success) {
-          this.submitSuccess.set(true);
-          this.contactForm.reset({ subject: 'Job Proposal' });
-        } else {
-          this.errorMessage.set(res.message);
-        }
+    // Use formsubmit.co to send email without backend/api keys.
+    fetch("https://formsubmit.co/ajax/steven.piedra02@gmail.com", {
+      method: "POST",
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
       },
-      error: () => {
-        this.isSubmitting.set(false);
-        this.errorMessage.set('Could not send email. Please try again or email directly at steven.piedra02@gmail.com.');
-      }
+      body: JSON.stringify({
+        name: formData.name,
+        email: formData.email,
+        message: formData.message,
+        _subject: formData.subject,
+        _template: "table"
+      })
+    })
+    .then(response => response.json())
+    .then(data => {
+      this.isSubmitting.set(false);
+      this.submitSuccess.set(true);
+      this.contactForm.reset({ subject: 'Job Proposal' });
+    })
+    .catch(error => {
+      console.error(error);
+      this.isSubmitting.set(false);
+      this.errorMessage.set('Error sending message. Please try again later or contact me directly via email.');
     });
   }
 
-  private resetFormState() {
+  resetFormState() {
     this.submitSuccess.set(false);
     this.errorMessage.set(null);
     this.contactForm.reset({ subject: 'Job Proposal' });
