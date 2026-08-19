@@ -192,7 +192,7 @@ import { ProjectDetailModalComponent } from '../../shared/components/project-det
                 <p class="card-desc">{{ project.description }}</p>
                 <div class="card-techs">
                   <span *ngFor="let tech of project.technologies.slice(0, 3)" class="tech-tag">{{ tech }}</span>
-                  <span *ngIf="project.technologies.length > 3" class="tech-tag extra">+{{ project.technologies.length - 3 }}</span>xtra">+{{ project.technologies.length - 3 }}</span>
+                  <span *ngIf="project.technologies.length > 3" class="tech-tag extra">+{{ project.technologies.length - 3 }}</span>
                 </div>
               </div>
             </article>

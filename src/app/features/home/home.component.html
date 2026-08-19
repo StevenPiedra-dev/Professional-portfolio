@@ -275,7 +275,7 @@
                 <h3 class="card-title">Blog Articles by Topic</h3>
               </div>
               <div class="topic-list">
-                <div class="topic-row" *ngFor="let cat of articleCategories">
+                <div class="topic-row" *ngFor="let cat of articleCategories()">
                   <span class="topic-name">{{ cat.category }}</span>
                   <span class="topic-count">{{ cat.count }} posts</span>
                 </div>
