@@ -3,7 +3,7 @@
 
     <!-- BRAND LOGO & TITLE -->
     <a class="nav-brand" routerLink="/" (click)="closeMenu()" aria-label="Steven Piedra Villalta - Home">
-      <div class="logo-wrapper">
+      <div class="logo-wrapper" (click)="onLogoClick($event)" title="Steven Piedra Villalta">
         <img src="assets/sp-logo.svg" alt="SP Logo" class="brand-img" />
       </div>
       <div class="brand-text">
@@ -44,3 +44,9 @@
 
   </div>
 </nav>
+
+<!-- SECRET ADMIN LOGIN MODAL -->
+<app-admin-login-modal
+  *ngIf="showAdminLogin()"
+  (close)="showAdminLogin.set(false)"
+></app-admin-login-modal>

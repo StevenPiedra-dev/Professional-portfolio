@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 
@@ -8,7 +8,7 @@ import { GithubService } from '../../core/services/github.service';
 import { ContactService } from '../../core/services/contact.service';
 
 // Models
-import { Project, Skill, GitHubProfile, GitHubRepo, GitHubEvent } from '../../core/models/portfolio.models';
+import { Project, Skill, GitHubProfile, GitHubRepo, GitHubEvent, SiteMetrics } from '../../core/models/portfolio.models';
 
 // Components
 import { ParticlesComponent } from '../../shared/components/particles/particles.component';
@@ -19,6 +19,7 @@ import { ChartDonutComponent, DonutSegment } from '../../shared/components/chart
 import { ChartLineComponent, PointData } from '../../shared/components/chart-line/chart-line.component';
 import { HeatmapComponent } from '../../shared/components/heatmap/heatmap.component';
 import { ProjectCardComponent } from '../../shared/components/project-card/project-card.component';
+import { ProjectDetailModalComponent } from '../../shared/components/project-detail-modal/project-detail-modal.component';
 
 @Component({
   selector: 'app-home',
@@ -33,7 +34,8 @@ import { ProjectCardComponent } from '../../shared/components/project-card/proje
     ChartDonutComponent,
     ChartLineComponent,
     HeatmapComponent,
-    ProjectCardComponent
+    ProjectCardComponent,
+    ProjectDetailModalComponent
   ],
   templateUrl: './home.component.html',
   styleUrls: ['./home.component.scss']
@@ -45,10 +47,14 @@ export class HomeComponent implements OnInit {
 
   // Data signals
   skills = signal<Skill[]>([]);
-  featuredProjects = signal<Project[]>([]);
+  projects = computed(() => this.portfolioService.projectsSignal().filter(p => p.featured));
+  selectedProject = signal<Project | null>(null);
+
   githubProfile = signal<GitHubProfile | null>(null);
   githubRepos = signal<GitHubRepo[]>([]);
   githubEvents = signal<GitHubEvent[]>([]);
+
+  metrics = computed(() => this.portfolioService.getMetrics());
 
   // Filtering
   selectedCategory = signal<string>('all');
@@ -71,32 +77,35 @@ export class HomeComponent implements OnInit {
   // Template aliases
   get skillCategories() { return this.categoriesList; }
   activeSkillCategory = this.selectedCategory;
-  // projects() alias for template — maps to featuredProjects signal
-  projects = this.featuredProjects;
 
-  // Static data referenced in template
   reposPerYear = [
-    { year: '2022', count: 4 },
-    { year: '2023', count: 8 },
-    { year: '2024', count: 12 },
-    { year: '2025', count: 18 }
+    { year: '2022', count: 3 },
+    { year: '2023', count: 5 },
+    { year: '2024', count: 8 },
+    { year: '2025', count: 14 }
   ];
 
-  articleCategories = [
-    { category: 'Full Stack', count: 8 },
-    { category: 'IA & ML', count: 5 },
-    { category: 'DevOps', count: 3 },
-    { category: 'Producto', count: 4 }
-  ];
+  articleCategories = computed(() => {
+    const blogs = this.portfolioService.blogPostsSignal();
+    const catCounts: Record<string, number> = {};
+    blogs.forEach(b => {
+      catCounts[b.category] = (catCounts[b.category] || 0) + 1;
+    });
+
+    const labels: Record<string, string> = {
+      ai: 'IA & ML', frontend: 'Frontend', backend: 'Backend', devops: 'DevOps', product: 'Producto'
+    };
+
+    return Object.keys(catCounts).map(cat => ({
+      category: labels[cat] || cat,
+      count: catCounts[cat]
+    }));
+  });
 
   ngOnInit() {
     // Load skills
     const allSkills = this.portfolioService.getSkills();
     this.skills.set(allSkills);
-
-    // Load featured projects
-    const allProjects = this.portfolioService.getProjects();
-    this.featuredProjects.set(allProjects.filter(p => p.featured));
 
     // Prepare chart data
     this.prepareChartData(allSkills);
@@ -105,6 +114,10 @@ export class HomeComponent implements OnInit {
     this.githubService.getProfile().subscribe(profile => this.githubProfile.set(profile));
     this.githubService.getRepos().subscribe(repos => this.githubRepos.set(repos));
     this.githubService.getEvents().subscribe(events => this.githubEvents.set(events));
+  }
+
+  onSelectProject(project: Project) {
+    this.selectedProject.set(project);
   }
 
   filteredSkills(): Skill[] {
@@ -117,7 +130,6 @@ export class HomeComponent implements OnInit {
     this.selectedCategory.set(catId);
   }
 
-  // Additional properties and helper methods for template
   heatmapWeeks = Array.from({ length: 30 }, () =>
     Array.from({ length: 7 }, () => ({
       level: Math.floor(Math.random() * 5),
@@ -156,7 +168,6 @@ export class HomeComponent implements OnInit {
   }
 
   private prepareChartData(skillsList: Skill[]) {
-    // Top 5 Skills Bar Data
     const sorted = [...skillsList].sort((a, b) => b.level - a.level).slice(0, 5);
     this.topSkillsBarData.set(sorted.map(s => ({
       label: s.name,
@@ -164,7 +175,6 @@ export class HomeComponent implements OnInit {
       category: s.category
     })));
 
-    // Stack Distribution Donut
     const categoryCounts: Record<string, number> = {};
     skillsList.forEach(s => {
       categoryCounts[s.category] = (categoryCounts[s.category] || 0) + 1;
@@ -185,7 +195,6 @@ export class HomeComponent implements OnInit {
       color: donutColors[cat] || '#3B82F6'
     })));
 
-    // Commits Line Chart
     this.commitLinePoints.set([
       { label: 'Jan', value: 28 },
       { label: 'Feb', value: 45 },

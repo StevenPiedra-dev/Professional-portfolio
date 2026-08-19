@@ -85,49 +85,49 @@
     <div class="section-container">
       <div class="kpi-grid">
         <app-counter-card
-          [targetValue]="githubProfile()?.public_repos || 14"
+          [targetValue]="githubProfile()?.public_repos || metrics().githubRepos"
           label="GitHub Repos"
           suffix="+"
           iconSvg='<svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20M4 19.5A2.5 2.5 0 0 0 6.5 22H20V2H6.5A2.5 2.5 0 0 0 4 4.5v15z"/></svg>'
         ></app-counter-card>
 
         <app-counter-card
-          [targetValue]="420"
+          [targetValue]="metrics().totalCommits"
           label="Total Commits"
           suffix="+"
           iconSvg='<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><line x1="1.05" y1="12" x2="7" y2="12"/><line x1="17" y1="12" x2="22.95" y2="12"/></svg>'
         ></app-counter-card>
 
         <app-counter-card
-          [targetValue]="githubProfile()?.followers || 18"
+          [targetValue]="githubProfile()?.followers || metrics().followers"
           label="Followers"
           suffix=""
           iconSvg='<svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>'
         ></app-counter-card>
 
         <app-counter-card
-          [targetValue]="31"
+          [targetValue]="metrics().articlesPublished"
           label="Articles Published"
           suffix=""
           iconSvg='<svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>'
         ></app-counter-card>
 
         <app-counter-card
-          [targetValue]="12500"
+          [targetValue]="metrics().blogViews"
           label="Blog Views"
           suffix="+"
           iconSvg='<svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>'
         ></app-counter-card>
 
         <app-counter-card
-          [targetValue]="25"
+          [targetValue]="metrics().apisBuilt"
           label="APIs Built"
           suffix="+"
           iconSvg='<svg viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>'
         ></app-counter-card>
 
         <app-counter-card
-          [targetValue]="19"
+          [targetValue]="metrics().techStackMastery"
           label="Tech Stack"
           suffix=" Mastery"
           iconSvg='<svg viewBox="0 0 24 24"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>'
@@ -304,6 +304,7 @@
         <app-project-card
           *ngFor="let project of projects()"
           [project]="project"
+          (selectProject)="onSelectProject($event)"
         ></app-project-card>
       </div>
     </div>
@@ -363,5 +364,11 @@
       </div>
     </div>
   </section>
+
+  <!-- PROJECT DETAIL MODAL -->
+  <app-project-detail-modal
+    [project]="selectedProject()"
+    (close)="selectedProject.set(null)"
+  ></app-project-detail-modal>
 
 </main>

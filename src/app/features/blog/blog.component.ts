@@ -1,27 +1,15 @@
-import { Component, signal, computed } from '@angular/core';
+import { Component, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-
-interface BlogPost {
-  id: number;
-  title: string;
-  excerpt: string;
-  category: string;
-  tags: string[];
-  readTime: number;
-  date: string;
-  icon: string;
-  featured: boolean;
-  gradient: string;
-  views: number;
-  likes: number;
-}
+import { PortfolioService } from '../../core/services/portfolio.service';
+import { BlogPost } from '../../core/models/portfolio.models';
+import { BlogDetailModalComponent } from '../../shared/components/blog-detail-modal/blog-detail-modal.component';
 
 @Component({
   selector: 'app-blog',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule],
+  imports: [CommonModule, RouterModule, FormsModule, BlogDetailModalComponent],
   template: `
     <main class="blog-page">
 
@@ -36,7 +24,7 @@ interface BlogPost {
           </p>
           <div class="hero-stats">
             <div class="stat-item">
-              <span class="stat-num">{{ posts.length }}</span>
+              <span class="stat-num">{{ posts().length }}</span>
               <span class="stat-lbl">Artículos</span>
             </div>
             <div class="stat-div"></div>
@@ -76,7 +64,6 @@ interface BlogPost {
               <div class="featured-footer">
                 <div class="post-stats">
                   <span class="post-stat">⏱️ {{ featuredPost()!.readTime }} min lectura</span>
-                  <span class="post-stat">👁️ {{ featuredPost()!.views }}</span>
                   <span class="post-stat">❤️ {{ featuredPost()!.likes }}</span>
                 </div>
                 <button class="read-btn" (click)="onReadPost(featuredPost()!)">
@@ -173,7 +160,6 @@ interface BlogPost {
                   <div class="post-info-row">
                     <span class="read-time">⏱️ {{ post.readTime }} min</span>
                     <div class="post-engagements">
-                      <span>👁️ {{ post.views }}</span>
                       <span>❤️ {{ post.likes }}</span>
                     </div>
                   </div>
@@ -209,6 +195,12 @@ interface BlogPost {
           </div>
         </div>
       </section>
+
+      <!-- BLOG DETAIL MODAL -->
+      <app-blog-detail-modal
+        [post]="selectedPost()"
+        (close)="selectedPost.set(null)"
+      ></app-blog-detail-modal>
 
     </main>
   `,
@@ -830,6 +822,11 @@ interface BlogPost {
   `]
 })
 export class BlogComponent {
+  private portfolioService = inject(PortfolioService);
+
+  posts = this.portfolioService.blogPostsSignal;
+  selectedPost = signal<BlogPost | null>(null);
+
   searchQ = '';
   activeCat = signal<string>('all');
 
@@ -842,97 +839,10 @@ export class BlogComponent {
     { id: 'product', label: 'Producto', icon: '🎯' }
   ];
 
-  posts: BlogPost[] = [
-    {
-      id: 1,
-      title: 'Construyendo una API con FastAPI y RAG: De cero a producción',
-      excerpt: 'Una guía completa para crear una API inteligente que combina FastAPI con Retrieval-Augmented Generation usando LangChain y embeddings de OpenAI para respuestas contextuales precisas.',
-      category: 'ai',
-      tags: ['FastAPI', 'RAG', 'LangChain', 'OpenAI', 'Python'],
-      readTime: 12,
-      date: 'Julio 2025',
-      icon: '🤖',
-      featured: true,
-      gradient: 'linear-gradient(135deg, #2a1a5c, #7c3aed)',
-      views: 842,
-      likes: 64
-    },
-    {
-      id: 2,
-      title: 'Angular Signals: El futuro de la reactividad en Angular 17+',
-      excerpt: 'Explorando el nuevo sistema de reactividad de Angular con Signals. Comparativa con RxJS, casos de uso prácticos y migración de código existente.',
-      category: 'frontend',
-      tags: ['Angular', 'Signals', 'RxJS', 'TypeScript'],
-      readTime: 8,
-      date: 'Junio 2025',
-      icon: '⚡',
-      featured: false,
-      gradient: 'linear-gradient(135deg, #1a3a5c, #3B82F6)',
-      views: 671,
-      likes: 48
-    },
-    {
-      id: 3,
-      title: 'Microservicios con Docker y .NET Core: Arquitectura práctica',
-      excerpt: 'Diseñando un ecosistema de microservicios resiliente con .NET Core, Docker Compose, API Gateway y patrones de comunicación asíncrona con RabbitMQ.',
-      category: 'backend',
-      tags: ['.NET Core', 'Docker', 'RabbitMQ', 'Microservicios'],
-      readTime: 15,
-      date: 'Mayo 2025',
-      icon: '🔧',
-      featured: false,
-      gradient: 'linear-gradient(135deg, #1a3a40, #0f766e)',
-      views: 534,
-      likes: 39
-    },
-    {
-      id: 4,
-      title: 'CI/CD con GitHub Actions: Automatiza tu pipeline de despliegue',
-      excerpt: 'Construye un pipeline de integración y entrega continua desde cero con GitHub Actions. Tests automáticos, análisis de código y despliegue a Azure.',
-      category: 'devops',
-      tags: ['GitHub Actions', 'CI/CD', 'Azure', 'Docker'],
-      readTime: 10,
-      date: 'Abril 2025',
-      icon: '🚀',
-      featured: false,
-      gradient: 'linear-gradient(135deg, #3a2a1a, #b45309)',
-      views: 423,
-      likes: 31
-    },
-    {
-      id: 5,
-      title: 'Product Management en startups tech: Lecciones reales',
-      excerpt: 'Reflexiones sobre cómo priorizar el backlog, comunicar con stakeholders y tomar decisiones de producto en un entorno startup con recursos limitados.',
-      category: 'product',
-      tags: ['Product Manager', 'Agile', 'Scrum', 'OKRs'],
-      readTime: 7,
-      date: 'Marzo 2025',
-      icon: '🎯',
-      featured: false,
-      gradient: 'linear-gradient(135deg, #3a1a3a, #be185d)',
-      views: 389,
-      likes: 28
-    },
-    {
-      id: 6,
-      title: 'PostgreSQL avanzado: Indexación, JSONB y performance tuning',
-      excerpt: 'Técnicas avanzadas de optimización en PostgreSQL: estrategias de indexación, uso de JSONB para datos semiestructurados y análisis de query plans.',
-      category: 'backend',
-      tags: ['PostgreSQL', 'SQL', 'Performance', 'Indexación'],
-      readTime: 11,
-      date: 'Febrero 2025',
-      icon: '🗄️',
-      featured: false,
-      gradient: 'linear-gradient(135deg, #1a2a3a, #1e4d6b)',
-      views: 312,
-      likes: 22
-    }
-  ];
-
-  featuredPost = computed(() => this.posts.find(p => p.featured));
+  featuredPost = computed(() => this.posts().find(p => p.featured));
 
   filteredPosts = computed(() => {
-    let list = this.posts.filter(p => !p.featured);
+    let list = this.posts().filter(p => !p.featured);
 
     if (this.activeCat() !== 'all') {
       list = list.filter(p => p.category === this.activeCat());
@@ -970,8 +880,7 @@ export class BlogComponent {
   }
 
   onReadPost(post: BlogPost) {
-    // Navigate to full post or open external link
-    console.log('Reading post:', post.title);
+    this.selectedPost.set(post);
   }
 
   trackPost(index: number, post: BlogPost): number {

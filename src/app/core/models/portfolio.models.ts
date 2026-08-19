@@ -2,13 +2,41 @@ export interface Project {
   id: number;
   title: string;
   description: string;
+  longDescription?: string;
   technologies: string[];
   imageUrl: string;
   liveUrl?: string;
   githubUrl?: string;
   featured: boolean;
   stars?: number;
-  forks?: number;
+  category?: string;
+  year?: number;
+}
+
+export interface BlogPost {
+  id: number;
+  title: string;
+  excerpt: string;
+  content?: string;
+  category: string;
+  tags: string[];
+  readTime: number;
+  date: string;
+  icon: string;
+  featured: boolean;
+  gradient: string;
+  likes: number;
+}
+
+export interface SiteMetrics {
+  githubRepos: number;
+  totalCommits: number;
+  followers: number;
+  articlesPublished: number;
+  blogViews: number;
+  apisBuilt: number;
+  techStackMastery: number;
+  professionalCerts: number;
 }
 
 export type SkillCategory = 'frontend' | 'backend' | 'databases' | 'cloud' | 'tools' | 'methodologies';

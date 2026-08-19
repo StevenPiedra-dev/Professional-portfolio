@@ -32,6 +32,10 @@ export const routes: Routes = [
     loadComponent: () => import('./features/contacts/contacts.component').then(m => m.ContactsComponent)
   },
   {
+    path: 'admin',
+    loadComponent: () => import('./features/admin/admin.component').then(m => m.AdminComponent)
+  },
+  {
     path: '**',
     loadComponent: () => import('./features/not-found/not-found.component').then(m => m.NotFoundComponent)
   }
