@@ -1,6 +1,6 @@
 {
   "name": "portfolio-steven-piedra",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Professional Angular portfolio for Steven Piedra",
   "scripts": {
     "ng": "ng",
