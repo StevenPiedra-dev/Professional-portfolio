@@ -1,14 +1,16 @@
-<nav class="navbar" [class.scrolled]="isScrolled()" role="navigation" aria-label="Main navigation">
+<nav class="navbar" [class.scrolled]="isScrolled()" [class.admin-mode]="isAdmin" role="navigation" aria-label="Main navigation">
   <div class="nav-container">
 
     <!-- BRAND LOGO & TITLE -->
-    <a class="nav-brand" routerLink="/" (click)="closeMenu()" aria-label="Steven Piedra Villalta - Home">
-      <div class="logo-wrapper" (click)="onLogoClick($event)" title="Steven Piedra Villalta">
+    <a class="nav-brand" [routerLink]="isAdmin ? null : '/'" (click)="closeMenu()" aria-label="Steven Piedra Villalta - Home">
+      <div class="logo-wrapper" (click)="onLogoClick($event)" title="{{ isAdmin ? 'Triple-clic para volver a vista usuario' : 'Steven Piedra Villalta' }}">
         <img src="assets/sp-logo.svg" alt="SP Logo" class="brand-img" />
+        <span class="admin-badge" *ngIf="isAdmin">ADMIN</span>
       </div>
       <div class="brand-text">
         <span class="brand-name">Steven Piedra Villalta</span>
-        <span class="brand-subtitle">Full Stack Developer | AI Developer | Product Manager</span>
+        <span class="brand-subtitle" *ngIf="!isAdmin">Full Stack Developer | AI Developer | Product Manager</span>
+        <span class="brand-subtitle admin-subtitle" *ngIf="isAdmin">🛡️ Vista Administrador — Triple-clic para salir</span>
       </div>
     </a>
 
@@ -23,10 +25,11 @@
         <li *ngFor="let link of navLinks" role="listitem">
           <a
             class="nav-link"
-            [routerLink]="link.path"
-            routerLinkActive="active"
+            [class.admin-nav-link]="isAdmin"
+            [routerLink]="isAdmin ? null : link.path"
+            [routerLinkActive]="isAdmin ? '' : 'active'"
             [routerLinkActiveOptions]="{ exact: link.path === '/' }"
-            (click)="closeMenu()"
+            (click)="onNavLinkClick($event, link.path)"
           >
             {{ link.label }}
           </a>
@@ -34,11 +37,11 @@
       </ul>
 
       <!-- LET'S TALK CTA BUTTON -->
-      <button class="nav-cta" (click)="openContactModal()" aria-label="Open contact form">
+      <button class="nav-cta" [class.admin-cta]="isAdmin" (click)="openContactModal()" [attr.aria-label]="isAdmin ? 'Ver mensajes de contacto' : 'Open contact form'">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="cta-icon">
           <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
         </svg>
-        <span>Let's Talk</span>
+        <span>{{ isAdmin ? 'Mensajes' : "Let's Talk" }}</span>
       </button>
     </div>
 

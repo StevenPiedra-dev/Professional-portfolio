@@ -1,10 +1,10 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterModule } from '@angular/router';
+import { Router, RouterModule, ActivatedRoute } from '@angular/router';
 import { PortfolioService } from '../../core/services/portfolio.service';
 import { AuthService } from '../../core/services/auth.service';
-import { Project, BlogPost, SiteMetrics } from '../../core/models/portfolio.models';
+import { Project, BlogPost, SiteMetrics, AboutInfo, ContactMessage } from '../../core/models/portfolio.models';
 
 @Component({
   selector: 'app-admin',
@@ -37,6 +37,12 @@ import { Project, BlogPost, SiteMetrics } from '../../core/models/portfolio.mode
           </button>
           <button class="tab-btn" [class.active]="activeTab() === 'metrics'" (click)="activeTab.set('metrics')">
             📊 Métricas del Home
+          </button>
+          <button class="tab-btn" [class.active]="activeTab() === 'about'" (click)="activeTab.set('about')">
+            👤 About Me
+          </button>
+          <button class="tab-btn" [class.active]="activeTab() === 'contact'" (click)="activeTab.set('contact')">
+            💬 Contacto ({{ contactMsgs().length }})
           </button>
         </div>
 
@@ -184,6 +190,74 @@ import { Project, BlogPost, SiteMetrics } from '../../core/models/portfolio.mode
           </div>
         </section>
 
+        <!-- ═══════════════════════════════════════════════
+             4. ABOUT ME TAB
+        ═══════════════════════════════════════════════ -->
+        <section *ngIf="activeTab() === 'about'" class="tab-content">
+          <div class="content-bar">
+            <h2>Gestión de About Me</h2>
+            <button class="btn btn-primary" (click)="saveAboutInfo()">💾 Guardar Cambios</button>
+          </div>
+
+          <div class="metrics-form-grid">
+            <div class="form-card" style="grid-column: 1/-1">
+              <label>Nombre Completo</label>
+              <input type="text" class="form-input" [(ngModel)]="aboutForm.fullName" />
+            </div>
+            <div class="form-card" style="grid-column: 1/-1">
+              <label>Título Profesional</label>
+              <input type="text" class="form-input" [(ngModel)]="aboutForm.roleTitle" placeholder="Full Stack Developer | AI Developer | Product Manager" />
+            </div>
+            <div class="form-card" style="grid-column: 1/-1">
+              <label>Biografía / Descripción</label>
+              <textarea class="form-input" [(ngModel)]="aboutForm.bio" rows="5" placeholder="Escribe una descripción profesional..."></textarea>
+            </div>
+            <div class="form-card">
+              <label>Años de Experiencia</label>
+              <input type="number" class="form-input" [(ngModel)]="aboutForm.experienceYears" />
+            </div>
+          </div>
+        </section>
+
+        <!-- ═══════════════════════════════════════════════
+             5. CONTACT TAB
+        ═══════════════════════════════════════════════ -->
+        <section *ngIf="activeTab() === 'contact'" class="tab-content">
+          <div class="content-bar">
+            <h2>Mensajes de Contacto ({{ contactMsgs().length }})</h2>
+          </div>
+
+          <div class="table-responsive">
+            <table class="admin-table" *ngIf="contactMsgs().length > 0">
+              <thead>
+                <tr>
+                  <th>Nombre</th>
+                  <th>Email</th>
+                  <th>Asunto</th>
+                  <th>Mensaje</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let msg of contactMsgs(); let i = index">
+                  <td><strong>{{ msg.name }}</strong></td>
+                  <td><a [href]="'mailto:' + msg.email" class="link-sm">{{ msg.email }}</a></td>
+                  <td>{{ msg.subject }}</td>
+                  <td><span class="table-sub">{{ msg.message | slice:0:80 }}...</span></td>
+                  <td>
+                    <button class="btn-icon delete" (click)="deleteContactMsg(i)" title="Eliminar">🗑️</button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+
+            <div class="no-data" *ngIf="contactMsgs().length === 0">
+              <div style="font-size: 3rem; margin-bottom: 1rem;">📭</div>
+              <p>No hay mensajes de contacto aún.</p>
+            </div>
+          </div>
+        </section>
+
       </div>
 
       <!-- ═══════════════════════════════════════════════
@@ -224,11 +298,19 @@ import { Project, BlogPost, SiteMetrics } from '../../core/models/portfolio.mode
               <label>Tecnologías (Separadas por comas)</label>
               <input type="text" class="form-input" [(ngModel)]="techsString" name="techs" placeholder="Angular, C#, Docker, Azure" />
             </div>
+            <div class="form-group">
+              <label>📷 Imagen 1 URL (Carrusel)</label>
+              <input type="url" class="form-input" [(ngModel)]="imgUrl1" name="imgUrl1" placeholder="https://..." />
+            </div>
+            <div class="form-group">
+              <label>📷 Imagen 2 URL (Carrusel)</label>
+              <input type="url" class="form-input" [(ngModel)]="imgUrl2" name="imgUrl2" placeholder="https://..." />
+            </div>
+            <div class="form-group">
+              <label>📷 Imagen 3 URL (Carrusel)</label>
+              <input type="url" class="form-input" [(ngModel)]="imgUrl3" name="imgUrl3" placeholder="https://..." />
+            </div>
             <div class="form-row">
-              <div class="form-group">
-                <label>Live Demo URL</label>
-                <input type="url" class="form-input" [(ngModel)]="projectForm.liveUrl" name="liveUrl" />
-              </div>
               <div class="form-group">
                 <label>GitHub Code URL</label>
                 <input type="url" class="form-input" [(ngModel)]="projectForm.githubUrl" name="githubUrl" />
@@ -545,19 +627,25 @@ export class AdminComponent implements OnInit {
   private portfolioService = inject(PortfolioService);
   private authService = inject(AuthService);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
 
-  activeTab = signal<'projects' | 'blogs' | 'metrics'>('projects');
+  activeTab = signal<'projects' | 'blogs' | 'metrics' | 'about' | 'contact'>('projects');
 
   projects = this.portfolioService.projectsSignal;
   blogs = this.portfolioService.blogPostsSignal;
+  contactMsgs = this.portfolioService.contactMsgsSignal;
 
   metricsForm: SiteMetrics = { ...this.portfolioService.getMetrics() };
+  aboutForm: AboutInfo = { ...this.portfolioService.getAboutInfo() };
 
   // Project Modal state
   showProjectModal = false;
   editingProject: Project | null = null;
   projectForm: Partial<Project> = {};
   techsString = '';
+  imgUrl1 = '';
+  imgUrl2 = '';
+  imgUrl3 = '';
 
   // Blog Modal state
   showBlogModal = false;
@@ -568,7 +656,19 @@ export class AdminComponent implements OnInit {
   ngOnInit() {
     if (!this.authService.isAuthenticated()) {
       this.router.navigate(['/']);
+      return;
     }
+
+    this.route.queryParams.subscribe(params => {
+      if (params['tab']) {
+        const t = params['tab'];
+        if (t === 'projects' || t === 'blogs' || t === 'metrics' || t === 'about' || t === 'contact') {
+          this.activeTab.set(t);
+        } else if (t === 'blog') {
+          this.activeTab.set('blogs');
+        }
+      }
+    });
   }
 
   onLogout() {
@@ -591,6 +691,9 @@ export class AdminComponent implements OnInit {
       imageUrl: 'assets/projects/ecommerce.jpg',
       year: 2026
     };
+    this.imgUrl1 = 'assets/projects/ecommerce.jpg';
+    this.imgUrl2 = 'assets/projects/taskmanager.jpg';
+    this.imgUrl3 = 'assets/projects/weather.jpg';
     this.techsString = 'Angular, C#, .NET Core, SQL Server';
     this.showProjectModal = true;
   }
@@ -598,18 +701,30 @@ export class AdminComponent implements OnInit {
   openEditProjectModal(project: Project) {
     this.editingProject = project;
     this.projectForm = { ...project };
+    this.imgUrl1 = project.images?.[0] || project.imageUrl || '';
+    this.imgUrl2 = project.images?.[1] || '';
+    this.imgUrl3 = project.images?.[2] || '';
     this.techsString = (project.technologies || []).join(', ');
     this.showProjectModal = true;
   }
 
   saveProject() {
     const techs = this.techsString.split(',').map(t => t.trim()).filter(t => t.length > 0);
+    const images = [this.imgUrl1, this.imgUrl2, this.imgUrl3]
+      .map(u => u ? u.trim() : '')
+      .filter(u => u.length > 0);
+
+    if (images.length === 0) {
+      images.push(this.projectForm.imageUrl || 'assets/projects/ecommerce.jpg');
+    }
+
     const projData: Omit<Project, 'id'> = {
       title: this.projectForm.title || 'Nuevo Proyecto',
       description: this.projectForm.description || '',
       longDescription: this.projectForm.longDescription || '',
       technologies: techs,
-      imageUrl: this.projectForm.imageUrl || 'assets/projects/ecommerce.jpg',
+      imageUrl: images[0] || 'assets/projects/ecommerce.jpg',
+      images: images,
       liveUrl: this.projectForm.liveUrl,
       githubUrl: this.projectForm.githubUrl,
       featured: !!this.projectForm.featured,
@@ -694,5 +809,18 @@ export class AdminComponent implements OnInit {
   saveMetrics() {
     this.portfolioService.updateMetrics(this.metricsForm);
     alert('¡Métricas del sitio actualizadas con éxito!');
+  }
+
+  // --- About Me ---
+  saveAboutInfo() {
+    this.portfolioService.updateAboutInfo(this.aboutForm);
+    alert('¡Información de About Me guardada con éxito!');
+  }
+
+  // --- Contact Messages ---
+  deleteContactMsg(index: number) {
+    if (confirm('¿Eliminar este mensaje de contacto?')) {
+      this.portfolioService.deleteContactMessage(index);
+    }
   }
 }

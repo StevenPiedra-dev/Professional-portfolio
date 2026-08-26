@@ -5,12 +5,20 @@ export interface Project {
   longDescription?: string;
   technologies: string[];
   imageUrl: string;
+  images?: string[];
   liveUrl?: string;
   githubUrl?: string;
   featured: boolean;
   stars?: number;
   category?: string;
   year?: number;
+}
+
+export interface AboutInfo {
+  fullName: string;
+  roleTitle: string;
+  bio: string;
+  experienceYears: number;
 }
 
 export interface BlogPost {

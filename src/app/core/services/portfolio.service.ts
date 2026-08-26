@@ -1,12 +1,14 @@
 import { Injectable, signal } from '@angular/core';
-import { Project, BlogPost, SiteMetrics, Skill, SocialLink } from '../models/portfolio.models';
+import { Project, BlogPost, SiteMetrics, Skill, SocialLink, AboutInfo, ContactMessage } from '../models/portfolio.models';
 
 @Injectable({ providedIn: 'root' })
 export class PortfolioService {
 
-  private readonly PROJECTS_KEY = 'portfolio_projects_v2';
-  private readonly BLOGS_KEY = 'portfolio_blogs_v2';
-  private readonly METRICS_KEY = 'portfolio_metrics_v2';
+  private readonly PROJECTS_KEY = 'portfolio_projects_v3';
+  private readonly BLOGS_KEY = 'portfolio_blogs_v3';
+  private readonly METRICS_KEY = 'portfolio_metrics_v3';
+  private readonly ABOUT_KEY = 'portfolio_about_v3';
+  private readonly CONTACT_MSGS_KEY = 'portfolio_contact_msgs_v3';
 
   private initialProjects: Project[] = [
     {
@@ -16,7 +18,11 @@ export class PortfolioService {
       longDescription: 'High-performance core banking platform built with C# .NET Core and Angular. Handles multi-currency transfers, automated fraud detection alerts, ISO 20022 message specs, and seamless integrations with external clearing networks. Optimized for high throughput and zero-downtime database failovers.',
       technologies: ['Angular', 'C#', '.NET Core', 'SQL Server', 'Azure', 'Docker'],
       imageUrl: 'assets/projects/ecommerce.jpg',
-      liveUrl: 'https://github.com/StevenPiedra-dev',
+      images: [
+        'assets/projects/ecommerce.jpg',
+        'assets/projects/taskmanager.jpg',
+        'assets/projects/weather.jpg'
+      ],
       githubUrl: 'https://github.com/StevenPiedra-dev',
       featured: true,
       stars: 12,
@@ -30,7 +36,11 @@ export class PortfolioService {
       longDescription: 'End-to-end RAG (Retrieval-Augmented Generation) system built using Python, FastAPI, and ChromaDB/PGVector. Enables contextual question-answering over unstructured enterprise contracts, PDF reports, and technical documentation with hybrid keyword/semantic search.',
       technologies: ['Python', 'FastAPI', 'React', 'OpenAI API', 'Docker', 'LangChain'],
       imageUrl: 'assets/projects/taskmanager.jpg',
-      liveUrl: 'https://github.com/StevenPiedra-dev',
+      images: [
+        'assets/projects/taskmanager.jpg',
+        'assets/projects/weather.jpg',
+        'assets/projects/microservices.jpg'
+      ],
       githubUrl: 'https://github.com/StevenPiedra-dev',
       featured: true,
       stars: 18,
@@ -44,7 +54,11 @@ export class PortfolioService {
       longDescription: 'Enterprise monitoring software connecting WebSocket telemetry feeds directly into dynamic SVG charts and heatmaps. Features configurable threshold alerts, multi-tenant workspace partitioning, and real-time query aggregation over time-series data.',
       technologies: ['Next.js', 'Node.js', 'PostgreSQL', 'Redis', 'WebSockets', 'TypeScript'],
       imageUrl: 'assets/projects/weather.jpg',
-      liveUrl: 'https://github.com/StevenPiedra-dev',
+      images: [
+        'assets/projects/weather.jpg',
+        'assets/projects/microservices.jpg',
+        'assets/projects/ecommerce.jpg'
+      ],
       githubUrl: 'https://github.com/StevenPiedra-dev',
       featured: true,
       stars: 15,
@@ -58,7 +72,11 @@ export class PortfolioService {
       longDescription: 'Lightweight reverse-proxy gateway engineered in Node.js and Go. Manages API rate-limiting via Redis token buckets, JWT validation, automated CORS headers, and load balancing across Docker containers deployed on GCP Cloud Run.',
       technologies: ['Node.js', 'Docker', 'Firebase', 'Git', 'GCP', 'Redis'],
       imageUrl: 'assets/projects/microservices.jpg',
-      liveUrl: 'https://github.com/StevenPiedra-dev',
+      images: [
+        'assets/projects/microservices.jpg',
+        'assets/projects/ecommerce.jpg',
+        'assets/projects/taskmanager.jpg'
+      ],
       githubUrl: 'https://github.com/StevenPiedra-dev',
       featured: false,
       stars: 9,
@@ -232,10 +250,34 @@ Utilizamos Dockerfiles multietapa para compilar imágenes ultraligeras basadas e
     professionalCerts: 8
   };
 
+  private initialAboutInfo: AboutInfo = {
+    fullName: 'Steven Piedra Villalta',
+    roleTitle: 'Full Stack Developer | AI Developer | Product Manager',
+    bio: 'Desarrollador Full Stack Senior con amplia experiencia en arquitecturas de software escalables, desarrollo de soluciones bancarias, automatización de procesos mediante IA y liderazgo de productos digitales.',
+    experienceYears: 4
+  };
+
+  private initialContactMsgs: ContactMessage[] = [
+    {
+      name: 'Carlos Rodríguez',
+      email: 'carlos.rodriguez@techbank.com',
+      subject: 'Oportunidad de desarrollo bancario en C# .NET y Angular',
+      message: 'Hola Steven, nos llamó mucho la atención tu experiencia en arquitecturas bancarias core. Quisiéramos agendar una reunión.'
+    },
+    {
+      name: 'María Fernández',
+      email: 'mfernandez@aisolutions.io',
+      subject: 'Consulta sobre integración RAG y LangChain',
+      message: 'Excelente artículo sobre FastAPI y RAG. Me gustaría colaborar en un proyecto de procesamiento de documentos legales con IA.'
+    }
+  ];
+
   // Signals
   projectsSignal = signal<Project[]>(this.loadStorage(this.PROJECTS_KEY, this.initialProjects));
   blogPostsSignal = signal<BlogPost[]>(this.loadStorage(this.BLOGS_KEY, this.initialBlogPosts));
   metricsSignal = signal<SiteMetrics>(this.loadStorage(this.METRICS_KEY, this.initialMetrics));
+  aboutInfoSignal = signal<AboutInfo>(this.loadStorage(this.ABOUT_KEY, this.initialAboutInfo));
+  contactMsgsSignal = signal<ContactMessage[]>(this.loadStorage(this.CONTACT_MSGS_KEY, this.initialContactMsgs));
 
   private loadStorage<T>(key: string, fallback: T): T {
     try {
@@ -272,6 +314,17 @@ Utilizamos Dockerfiles multietapa para compilar imágenes ultraligeras basadas e
 
   deleteProject(id: number): void {
     const updated = this.projectsSignal().filter(p => p.id !== id);
+    this.projectsSignal.set(updated);
+    this.saveStorage(this.PROJECTS_KEY, updated);
+  }
+
+  starProject(id: number): void {
+    const updated = this.projectsSignal().map(p => {
+      if (p.id === id) {
+        return { ...p, stars: (p.stars || 0) + 1 };
+      }
+      return p;
+    });
     this.projectsSignal.set(updated);
     this.saveStorage(this.PROJECTS_KEY, updated);
   }
@@ -327,6 +380,33 @@ Utilizamos Dockerfiles multietapa para compilar imágenes ultraligeras basadas e
     const updated = { ...this.metricsSignal(), ...partial };
     this.metricsSignal.set(updated);
     this.saveStorage(this.METRICS_KEY, updated);
+  }
+
+  // --- About Me Methods ---
+  getAboutInfo(): AboutInfo {
+    return this.aboutInfoSignal();
+  }
+
+  updateAboutInfo(info: AboutInfo): void {
+    this.aboutInfoSignal.set(info);
+    this.saveStorage(this.ABOUT_KEY, info);
+  }
+
+  // --- Contact Messages Methods ---
+  getContactMessages(): ContactMessage[] {
+    return this.contactMsgsSignal();
+  }
+
+  addContactMessage(msg: ContactMessage): void {
+    const updated = [msg, ...this.contactMsgsSignal()];
+    this.contactMsgsSignal.set(updated);
+    this.saveStorage(this.CONTACT_MSGS_KEY, updated);
+  }
+
+  deleteContactMessage(index: number): void {
+    const updated = this.contactMsgsSignal().filter((_, i) => i !== index);
+    this.contactMsgsSignal.set(updated);
+    this.saveStorage(this.CONTACT_MSGS_KEY, updated);
   }
 
   // --- Skills & Links ---
