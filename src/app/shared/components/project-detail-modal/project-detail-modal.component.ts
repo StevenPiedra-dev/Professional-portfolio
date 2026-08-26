@@ -9,8 +9,8 @@ import { ImageCarouselComponent } from '../image-carousel/image-carousel.compone
   standalone: true,
   imports: [CommonModule, ImageCarouselComponent],
   template: `
-    <div class="modal-overlay" (click)="closeModal()">
-      <div class="modal-card" (click)="$event.stopPropagation()" *ngIf="project">
+    <div class="modal-overlay" (click)="closeModal()" *ngIf="project">
+      <div class="modal-card" (click)="$event.stopPropagation()">
         <!-- Header -->
         <div class="modal-header">
           <div class="header-content">
