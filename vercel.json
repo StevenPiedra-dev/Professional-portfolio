@@ -1,5 +1,5 @@
 {
-  "buildCommand": "ng build --configuration production",
+  "buildCommand": "npm run vercel-build",
   "outputDirectory": "dist/portfolio-steven-piedra/browser",
   "rewrites": [
     { "source": "/(.*)", "destination": "/index.html" }
