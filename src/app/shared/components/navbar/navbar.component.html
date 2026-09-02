@@ -36,12 +36,12 @@
         </li>
       </ul>
 
-      <!-- LET'S TALK CTA BUTTON -->
-      <button class="nav-cta" [class.admin-cta]="isAdmin" (click)="openContactModal()" [attr.aria-label]="isAdmin ? 'Ver mensajes de contacto' : 'Open contact form'">
+      <!-- LET'S TALK CTA BUTTON - only for user mode -->
+      <button *ngIf="!isAdmin" class="nav-cta" (click)="openContactModal()" aria-label="Open contact form">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="cta-icon">
           <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
         </svg>
-        <span>{{ isAdmin ? 'Mensajes' : "Let's Talk" }}</span>
+        <span>Let's Talk</span>
       </button>
     </div>
 

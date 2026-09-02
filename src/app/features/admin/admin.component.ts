@@ -199,22 +199,57 @@ import { Project, BlogPost, SiteMetrics, AboutInfo, ContactMessage } from '../..
             <button class="btn btn-primary" (click)="saveAboutInfo()">💾 Guardar Cambios</button>
           </div>
 
-          <div class="metrics-form-grid">
+          <div class="about-form-grid">
+            <p style="color:#94A3B8; margin-bottom:1.5rem; grid-column:1/-1;">Edita toda la información que aparece en la página About Me.</p>
+
+            <h3 class="form-section-title" style="grid-column:1/-1">👤 Información Personal</h3>
             <div class="form-card" style="grid-column: 1/-1">
               <label>Nombre Completo</label>
               <input type="text" class="form-input" [(ngModel)]="aboutForm.fullName" />
             </div>
             <div class="form-card" style="grid-column: 1/-1">
-              <label>Título Profesional</label>
+              <label>Título Profesional (en Hero/Navbar)</label>
               <input type="text" class="form-input" [(ngModel)]="aboutForm.roleTitle" placeholder="Full Stack Developer | AI Developer | Product Manager" />
             </div>
             <div class="form-card" style="grid-column: 1/-1">
-              <label>Biografía / Descripción</label>
-              <textarea class="form-input" [(ngModel)]="aboutForm.bio" rows="5" placeholder="Escribe una descripción profesional..."></textarea>
+              <label>Párrafo Biografía 1</label>
+              <textarea class="form-input" [(ngModel)]="aboutForm.bioParagraph1" rows="3" placeholder="Data Analyst and Full Stack Developer..."></textarea>
             </div>
+            <div class="form-card" style="grid-column: 1/-1">
+              <label>Párrafo Biografía 2</label>
+              <textarea class="form-input" [(ngModel)]="aboutForm.bioParagraph2" rows="3" placeholder="Experienced in payment methods..."></textarea>
+            </div>
+
+            <h3 class="form-section-title" style="grid-column:1/-1">📊 Métricas Hero</h3>
             <div class="form-card">
               <label>Años de Experiencia</label>
               <input type="number" class="form-input" [(ngModel)]="aboutForm.experienceYears" />
+            </div>
+            <div class="form-card">
+              <label>Número de Tecnologías</label>
+              <input type="number" class="form-input" [(ngModel)]="aboutForm.technologiesCount" />
+            </div>
+            <div class="form-card">
+              <label>Proyectos Completados</label>
+              <input type="number" class="form-input" [(ngModel)]="aboutForm.completedProjectsCount" />
+            </div>
+
+            <h3 class="form-section-title" style="grid-column:1/-1">🔗 URLs y Contacto</h3>
+            <div class="form-card" style="grid-column: 1/-1">
+              <label>📄 URL del CV (enlace a PDF)</label>
+              <input type="url" class="form-input" [(ngModel)]="aboutForm.cvUrl" placeholder="https://example.com/CV_Steven.pdf" />
+            </div>
+            <div class="form-card">
+              <label>GitHub URL</label>
+              <input type="url" class="form-input" [(ngModel)]="aboutForm.githubUrl" />
+            </div>
+            <div class="form-card">
+              <label>LinkedIn URL</label>
+              <input type="url" class="form-input" [(ngModel)]="aboutForm.linkedinUrl" />
+            </div>
+            <div class="form-card">
+              <label>Email de Contacto</label>
+              <input type="email" class="form-input" [(ngModel)]="aboutForm.email" />
             </div>
           </div>
         </section>
@@ -243,7 +278,9 @@ import { Project, BlogPost, SiteMetrics, AboutInfo, ContactMessage } from '../..
                   <td><strong>{{ msg.name }}</strong></td>
                   <td><a [href]="'mailto:' + msg.email" class="link-sm">{{ msg.email }}</a></td>
                   <td>{{ msg.subject }}</td>
-                  <td><span class="table-sub">{{ msg.message | slice:0:80 }}...</span></td>
+                  <td>
+                    <button class="btn-text-expand" (click)="openMsgPopup(msg)">{{ msg.message | slice:0:60 }}... <span class="expand-hint">ver más</span></button>
+                  </td>
                   <td>
                     <button class="btn-icon delete" (click)="deleteContactMsg(i)" title="Eliminar">🗑️</button>
                   </td>
@@ -394,6 +431,28 @@ import { Project, BlogPost, SiteMetrics, AboutInfo, ContactMessage } from '../..
       </div>
 
     </main>
+
+    <!-- MESSAGE POPUP MODAL -->
+    <div class="modal-backdrop" *ngIf="selectedMsg" (click)="selectedMsg = null">
+      <div class="modal-card msg-popup" (click)="$event.stopPropagation()">
+        <button class="close-x" (click)="selectedMsg = null">✕</button>
+        <div class="msg-popup-header">
+          <div class="msg-popup-avatar">{{ selectedMsg.name.charAt(0).toUpperCase() }}</div>
+          <div>
+            <h3>{{ selectedMsg.name }}</h3>
+            <a [href]="'mailto:' + selectedMsg.email" class="link-sm">{{ selectedMsg.email }}</a>
+          </div>
+        </div>
+        <div class="msg-popup-subject">
+          <span class="label">Asunto:</span> {{ selectedMsg.subject }}
+        </div>
+        <div class="msg-popup-body">{{ selectedMsg.message }}</div>
+        <div class="msg-popup-footer">
+          <a [href]="'mailto:' + selectedMsg.email" class="btn btn-primary">&#128140; Responder por Email</a>
+          <button class="btn btn-outline" (click)="selectedMsg = null">Cerrar</button>
+        </div>
+      </div>
+    </div>
   `,
   styles: [`
     .admin-page {
@@ -595,6 +654,70 @@ import { Project, BlogPost, SiteMetrics, AboutInfo, ContactMessage } from '../..
       h3 { font-size: 1.4rem; font-weight: 800; margin-bottom: 1.5rem; }
     }
 
+    .form-section-title {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #60A5FA;
+      margin: 0.5rem 0;
+    }
+
+    .about-form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1.25rem;
+    }
+
+    .btn-text-expand {
+      background: none;
+      border: none;
+      color: #CBD5E1;
+      font-size: 0.85rem;
+      cursor: pointer;
+      text-align: left;
+      padding: 0;
+      &:hover { color: #fff; }
+      .expand-hint { color: #3B82F6; font-size: 0.78rem; }
+    }
+
+    .msg-popup {
+      max-width: 560px;
+      padding: 2rem;
+    }
+
+    .close-x {
+      position: absolute; top: 1rem; right: 1rem;
+      background: rgba(255,255,255,0.08); border: none; color: #94A3B8;
+      width: 32px; height: 32px; border-radius: 50%; cursor: pointer; font-size: 1rem;
+      &:hover { background: rgba(239,68,68,0.5); color: #fff; }
+    }
+
+    .msg-popup-header {
+      display: flex; align-items: center; gap: 1rem; margin-bottom: 1.25rem;
+    }
+
+    .msg-popup-avatar {
+      width: 48px; height: 48px; border-radius: 50%;
+      background: linear-gradient(135deg, #3B82F6, #A78BFA);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.4rem; font-weight: 800; color: #fff; flex-shrink: 0;
+    }
+
+    .msg-popup-header h3 { font-size: 1.1rem; font-weight: 700; margin: 0; }
+
+    .msg-popup-subject {
+      font-size: 0.85rem; color: #94A3B8; margin-bottom: 1rem;
+      .label { font-weight: 700; color: #CBD5E1; }
+    }
+
+    .msg-popup-body {
+      background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 10px; padding: 1rem 1.25rem;
+      font-size: 0.9rem; color: #E2E8F0; line-height: 1.7;
+      white-space: pre-wrap; margin-bottom: 1.5rem;
+    }
+
+    .msg-popup-footer { display: flex; gap: 0.75rem; justify-content: flex-end; }
+
     .form-group {
       display: flex;
       flex-direction: column;
@@ -637,6 +760,8 @@ export class AdminComponent implements OnInit {
 
   metricsForm: SiteMetrics = { ...this.portfolioService.getMetrics() };
   aboutForm: AboutInfo = { ...this.portfolioService.getAboutInfo() };
+
+  selectedMsg: ContactMessage | null = null;
 
   // Project Modal state
   showProjectModal = false;
@@ -818,9 +943,14 @@ export class AdminComponent implements OnInit {
   }
 
   // --- Contact Messages ---
+  openMsgPopup(msg: ContactMessage) {
+    this.selectedMsg = msg;
+  }
+
   deleteContactMsg(index: number) {
     if (confirm('¿Eliminar este mensaje de contacto?')) {
       this.portfolioService.deleteContactMessage(index);
+      this.selectedMsg = null;
     }
   }
 }

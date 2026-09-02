@@ -32,8 +32,8 @@ import { ImageCarouselComponent } from '../image-carousel/image-carousel.compone
 
           <!-- Interactive Stars Counter Chip -->
           <div class="meta-chips-row">
-            <button class="star-chip-btn" (click)="onStarClick($event)" title="¡Haz clic para agregar una estrella!">
-              ⭐ {{ project.stars || 0 }} Estrellas
+            <button class="star-chip-btn" [class.starred]="isStarred()" (click)="onStarClick($event)" [title]="isStarred() ? 'Quitar estrella' : 'Dar estrella'">
+              {{ isStarred() ? '⭐' : '☆' }} {{ getStars() }} {{ isStarred() ? 'Estrellado' : 'Dar Estrella' }}
             </button>
             <span class="year-chip" *ngIf="project.year">{{ project.year }}</span>
           </div>
@@ -159,9 +159,9 @@ import { ImageCarouselComponent } from '../image-carousel/image-carousel.compone
     }
 
     .star-chip-btn {
-      background: rgba(234, 179, 8, 0.15);
-      color: #FACC15;
-      border: 1px solid rgba(234, 179, 8, 0.4);
+      background: rgba(234, 179, 8, 0.1);
+      color: #94A3B8;
+      border: 1px solid rgba(234, 179, 8, 0.25);
       padding: 6px 16px;
       border-radius: 20px;
       font-size: 13px;
@@ -174,9 +174,16 @@ import { ImageCarouselComponent } from '../image-carousel/image-carousel.compone
     }
 
     .star-chip-btn:hover {
-      background: rgba(234, 179, 8, 0.3);
+      background: rgba(234, 179, 8, 0.2);
       transform: scale(1.05);
-      box-shadow: 0 0 12px rgba(234, 179, 8, 0.4);
+      color: #FACC15;
+    }
+
+    .star-chip-btn.starred {
+      background: rgba(234, 179, 8, 0.2);
+      color: #FACC15;
+      border-color: rgba(234, 179, 8, 0.5);
+      box-shadow: 0 0 10px rgba(234, 179, 8, 0.2);
     }
 
     .year-chip {
@@ -284,11 +291,20 @@ export class ProjectDetailModalComponent {
     this.close.emit();
   }
 
+  isStarred(): boolean {
+    return !!this.project && this.portfolioService.isProjectStarred(this.project.id);
+  }
+
+  getStars(): number {
+    if (!this.project) return 0;
+    const live = this.portfolioService.projectsSignal().find(p => p.id === this.project!.id);
+    return live ? (live.stars || 0) : (this.project.stars || 0);
+  }
+
   onStarClick(event: MouseEvent): void {
     event.stopPropagation();
     if (this.project) {
-      this.portfolioService.starProject(this.project.id);
-      this.project.stars = (this.project.stars || 0) + 1;
+      this.portfolioService.toggleProjectStar(this.project.id);
     }
   }
 }

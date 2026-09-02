@@ -53,8 +53,8 @@ import { PortfolioService } from '../../../core/services/portfolio.service';
               <span *ngFor="let tag of post.tags" class="tag-chip">#{{ tag }}</span>
             </div>
 
-            <button class="like-btn" [class.liked]="hasLiked" (click)="onLike()">
-              ❤️ {{ hasLiked ? '¡Gracias!' : 'Me gusta (' + post.likes + ')' }}
+            <button class="like-btn" [class.liked]="isLiked()" (click)="onLike()">
+              {{ isLiked() ? '❤️ \u00a1Gracias! (' + getLikes() + ')' : '🧡 Me gusta (' + getLikes() + ')' }}
             </button>
           </div>
         </div>
@@ -280,16 +280,24 @@ export class BlogDetailModalComponent {
   @Output() close = new EventEmitter<void>();
 
   private portfolioService = inject(PortfolioService);
-  hasLiked = false;
 
   closeModal() {
     this.close.emit();
   }
 
+  isLiked(): boolean {
+    return !!this.post && this.portfolioService.isBlogLiked(this.post.id);
+  }
+
+  getLikes(): number {
+    if (!this.post) return 0;
+    const live = this.portfolioService.blogPostsSignal().find(b => b.id === this.post!.id);
+    return live ? live.likes : this.post.likes;
+  }
+
   onLike() {
-    if (this.post && !this.hasLiked) {
-      this.portfolioService.likeBlogPost(this.post.id);
-      this.hasLiked = true;
+    if (this.post) {
+      this.portfolioService.toggleBlogLike(this.post.id);
     }
   }
 

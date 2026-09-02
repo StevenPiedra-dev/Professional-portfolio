@@ -1015,6 +1015,20 @@ export class AboutComponent implements OnInit {
   donutSegments = signal<DonutSegment[]>([]);
   barData = signal<BarData[]>([]);
 
+  // Reactive about info from service
+  aboutInfo = this.portfolioService.aboutInfoSignal;
+
+  get timeline() { return this.aboutInfo().timeline || []; }
+  get certifications() { return this.aboutInfo().certifications || []; }
+  get values() { return this.aboutInfo().values || this._defaultValues; }
+
+  private _defaultValues: ValueCard[] = [
+    { icon: '🏗️', title: 'Clean Code', description: 'I prioritize maintainable, scalable, and well-documented code following SOLID principles and Clean Architecture.' },
+    { icon: '🚀', title: 'Continuous Delivery', description: 'Agile methodologies and CI/CD to deliver value quickly and incrementally to the client.' },
+    { icon: '🤖', title: 'AI-Driven', description: 'I integrate AI capabilities to build intelligent solutions that solve complex problems.' },
+    { icon: '👥', title: 'Collaboration', description: 'I believe in teamwork, open communication, and collective growth to achieve great goals.' }
+  ];
+
   skillCategories = [
     { id: 'all', label: 'All', icon: '🗂️' },
     { id: 'frontend', label: 'Frontend', icon: '🎨' },
@@ -1022,68 +1036,6 @@ export class AboutComponent implements OnInit {
     { id: 'databases', label: 'Databases', icon: '🗄️' },
     { id: 'cloud', label: 'Cloud', icon: '☁️' },
     { id: 'methodologies', label: 'Methods', icon: '🎯' }
-  ];
-
-  values: ValueCard[] = [
-    {
-      icon: '🏗️',
-      title: 'Clean Code',
-      description: 'I prioritize maintainable, scalable, and well-documented code following SOLID principles and Clean Architecture.'
-    },
-    {
-      icon: '🚀',
-      title: 'Continuous Delivery',
-      description: 'Agile methodologies and CI/CD to deliver value quickly and incrementally to the client.'
-    },
-    {
-      icon: '🤖',
-      title: 'AI-Driven',
-      description: 'I integrate AI capabilities to build intelligent solutions that solve complex problems.'
-    },
-    {
-      icon: '👥',
-      title: 'Collaboration',
-      description: 'I believe in teamwork, open communication, and collective growth to achieve great goals.'
-    }
-  ];
-
-  timeline: TimelineEvent[] = [
-    {
-      year: '2024',
-      period: 'Oct 2024 - Present',
-      role: 'Investigation Analyst I',
-      company: 'BAC, Calle Blancos',
-      description: 'Experience using data analysis tools in the financial field and creating executive presentations for senior management and vice presidents. Experience in quantitative and qualitative analysis of Fintechs and payment methods in general. Experience with emerging technologies and businesses that generate new revenue streams for the organization.',
-      tags: ['Data Analysis', 'Fintech', 'Presentations'],
-      icon: '📊',
-      type: 'work'
-    },
-    {
-      year: '2023',
-      period: 'Jun 2023 - Sep 2024',
-      role: 'Critical Processes Assistant',
-      company: 'BAC, Curridabat',
-      description: 'I created and managed dashboards in Power BI and Tableau, managed processes with large amounts of data (data acquisition, transformation, and loading). I prepared presentations for senior executives and provided management support.',
-      tags: ['Power BI', 'Tableau', 'Data Transformation'],
-      icon: '📈',
-      type: 'work'
-    },
-    {
-      year: '2022',
-      period: 'Jan 2022 - Jan 2023',
-      role: 'Fullstack Developer',
-      company: 'Freelance, San Pedro',
-      description: 'Developing using .NetCore, Azure Database as backend and React as the framework, the project was developed implementing RESTful APIs, authentication modules, and relational database models. Delivered production-ready deployment and user training.',
-      tags: ['.NET Core', 'Azure', 'React', 'REST API'],
-      icon: '💻',
-      type: 'work'
-    }
-  ];
-
-  certifications = [
-    { icon: '🎓', name: 'Professional MBA with an emphasis in Management', issuer: 'Universidad de Costa Rica (UCR)', year: 'Sep 2025 - Present', level: 'In-Progress' },
-    { icon: '📊', name: 'Big Data Specialization', issuer: 'Universidad Fidélitas', year: 'Jan 2022 - May 2023', level: 'Completed' },
-    { icon: '💻', name: 'Bachelor’s Degree in Systems Engineering', issuer: 'Universidad Fidélitas', year: 'Jan 2020 - Sep 2023', level: 'Completed' }
   ];
 
   filteredSkills() {

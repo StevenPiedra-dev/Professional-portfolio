@@ -14,11 +14,48 @@ export interface Project {
   year?: number;
 }
 
+export interface TimelineItem {
+  id?: number;
+  year: string;
+  period: string;
+  role: string;
+  company: string;
+  description: string;
+  tags: string[];
+  icon: string;
+  type: 'work' | 'education';
+}
+
+export interface CertificationItem {
+  id?: number;
+  icon: string;
+  name: string;
+  issuer: string;
+  year: string;
+  level: string;
+}
+
+export interface ValueItem {
+  icon: string;
+  title: string;
+  description: string;
+}
+
 export interface AboutInfo {
   fullName: string;
   roleTitle: string;
-  bio: string;
+  bioParagraph1: string;
+  bioParagraph2: string;
   experienceYears: number;
+  technologiesCount: number;
+  completedProjectsCount: number;
+  cvUrl: string;
+  githubUrl: string;
+  linkedinUrl: string;
+  email: string;
+  timeline?: TimelineItem[];
+  certifications?: CertificationItem[];
+  values?: ValueItem[];
 }
 
 export interface BlogPost {

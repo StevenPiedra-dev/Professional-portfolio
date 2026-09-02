@@ -41,16 +41,22 @@ import { AuthService } from '../../core/services/auth.service';
 
           <div class="form-group">
             <label for="admin-pass">Contraseña</label>
-            <input
-              id="admin-pass"
-              type="password"
-              class="form-input"
-              [(ngModel)]="password"
-              name="password"
-              placeholder="••••••••••••"
-              required
-              autocomplete="current-password"
-            />
+            <div class="input-eye-wrapper">
+              <input
+                id="admin-pass"
+                [type]="showPassword ? 'text' : 'password'"
+                class="form-input"
+                [(ngModel)]="password"
+                name="password"
+                placeholder="••••••••••••"
+                required
+                autocomplete="current-password"
+              />
+              <button type="button" class="eye-btn" (click)="showPassword = !showPassword" [title]="showPassword ? 'Ocultar' : 'Mostrar'">
+                <svg *ngIf="!showPassword" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                <svg *ngIf="showPassword" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+              </button>
+            </div>
           </div>
 
           <div class="error-msg" *ngIf="errorMessage">
@@ -168,12 +174,37 @@ import { AuthService } from '../../core/services/auth.service';
       border-radius: 10px;
       color: #fff;
       font-size: 0.95rem;
+      width: 100%;
 
       &:focus {
         outline: none;
         border-color: #3B82F6;
         box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
       }
+    }
+
+    .input-eye-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+
+      .form-input { padding-right: 2.75rem; }
+    }
+
+    .eye-btn {
+      position: absolute;
+      right: 0.75rem;
+      background: none;
+      border: none;
+      color: #94A3B8;
+      cursor: pointer;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: color 0.2s;
+      svg { width: 18px; height: 18px; }
+      &:hover { color: #60A5FA; }
     }
 
     .error-msg {
@@ -209,6 +240,7 @@ export class AdminLoginModalComponent {
 
   username = '';
   password = '';
+  showPassword = false;
   errorMessage = '';
 
   private authService = inject(AuthService);

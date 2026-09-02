@@ -4,11 +4,13 @@ import { Project, BlogPost, SiteMetrics, Skill, SocialLink, AboutInfo, ContactMe
 @Injectable({ providedIn: 'root' })
 export class PortfolioService {
 
-  private readonly PROJECTS_KEY = 'portfolio_projects_v3';
-  private readonly BLOGS_KEY = 'portfolio_blogs_v3';
-  private readonly METRICS_KEY = 'portfolio_metrics_v3';
-  private readonly ABOUT_KEY = 'portfolio_about_v3';
-  private readonly CONTACT_MSGS_KEY = 'portfolio_contact_msgs_v3';
+  private readonly PROJECTS_KEY = 'portfolio_projects_v4';
+  private readonly BLOGS_KEY = 'portfolio_blogs_v4';
+  private readonly METRICS_KEY = 'portfolio_metrics_v4';
+  private readonly ABOUT_KEY = 'portfolio_about_v4';
+  private readonly SKILLS_KEY = 'portfolio_skills_v4';
+  private readonly CONTACT_MSGS_KEY = 'portfolio_contact_msgs_v4';
+  private readonly USER_VOTES_KEY = 'portfolio_user_votes_v4';
 
   private initialProjects: Project[] = [
     {
@@ -132,16 +134,6 @@ Un Signal es un contenedor reactivo que notifica automáticamente a sus consumid
 2. **Sin mem-leaks por suscripción:** No más \`takeUntilDestroyed()\` ni suscripciones olvidadas.
 3. **Interoperabilidad perfecta:** Métodos como \`toSignal()\` y \`toObservable()\` permiten integrar RxJS fácilmente.
 
-### Ejemplo de Código
-\`\`\`typescript
-const count = signal(0);
-const doubleCount = computed(() => count() * 2);
-
-function increment() {
-  count.update(v => v + 1);
-}
-\`\`\`
-
 ### Conclusión
 Signals no reemplazan a RxJS en eventos asíncronos complejos, pero simplifican drásticamente el estado local de componentes en Angular moderno.`,
       category: 'frontend',
@@ -166,10 +158,7 @@ Signals no reemplazan a RxJS en eventos asíncronos complejos, pero simplifican 
    - Transactions & Payments Service (C# .NET)
    - Notification Engine (Node.js)
 3. **Event-Driven Messaging:** RabbitMQ para comunicación eventual entre servicios sin acoplamiento síncrono.
-4. **Resiliencia con Polly:** Patrones de Circuit Breaker, Retry con Backoff Exponencial y Fallbacks.
-
-### Containerización
-Utilizamos Dockerfiles multietapa para compilar imágenes ultraligeras basadas en Alpine Linux (menores a 120MB), garantizando despliegues ultrarrápidos.`,
+4. **Resiliencia con Polly:** Patrones de Circuit Breaker, Retry con Backoff Exponencial y Fallbacks.`,
       category: 'backend',
       tags: ['.NET Core', 'Docker', 'RabbitMQ', 'Microservicios'],
       readTime: 15,
@@ -239,6 +228,82 @@ Utilizamos Dockerfiles multietapa para compilar imágenes ultraligeras basadas e
     }
   ];
 
+  private initialSkills: Skill[] = [
+    { name: 'Angular', level: 85, category: 'frontend', description: 'Standalone components, Signals, RxJS, state management, reactive forms' },
+    { name: 'React', level: 75, category: 'frontend', description: 'Hooks, Context API, Redux Toolkit, Next.js integration' },
+    { name: 'Next.js', level: 75, category: 'frontend', description: 'App Router, Server Components, SSR/SSG, API Routes' },
+    { name: 'TypeScript', level: 85, category: 'frontend', description: 'Strict typing, generics, interfaces, OOP & functional paradigms' },
+    { name: 'Tailwind CSS', level: 80, category: 'frontend', description: 'Utility-first styling, custom themes, responsive layouts' },
+    { name: 'Python', level: 80, category: 'backend', description: 'Data structures, backend services, script automation, AI pipelines' },
+    { name: 'FastAPI', level: 75, category: 'backend', description: 'Async RESTful APIs, Pydantic validation, OpenAPI specs' },
+    { name: 'Node.js', level: 70, category: 'backend', description: 'Express framework, REST services, async event loop' },
+    { name: 'C# / .NET', level: 75, category: 'backend', description: 'ASP.NET Core, Entity Framework, enterprise backend architectures' },
+    { name: 'SQL & Power BI', level: 85, category: 'databases', description: 'Relational data modeling, complex joins, index optimization, business intelligence' },
+    { name: 'PostgreSQL', level: 75, category: 'databases', description: 'Advanced queries, JSONB support, transaction management' },
+    { name: 'Azure Database & MySQL', level: 75, category: 'databases', description: 'Cloud DB management, relational design, queries' },
+    { name: 'Docker & Cloud', level: 70, category: 'cloud', description: 'Containerization, Docker Compose, Azure/GCP deployments' },
+    { name: 'Git & GitHub', level: 85, category: 'tools', description: 'Branch management, pull requests, GitHub Actions CI/CD' },
+    { name: 'AI & Prompt Eng.', level: 85, category: 'methodologies', description: 'LLM integration, RAG architectures, prompt optimization' },
+    { name: 'Agile & Scrum', level: 90, category: 'methodologies', description: 'Sprint planning, backlog prioritization, product management' }
+  ];
+
+  private initialAboutInfo: AboutInfo = {
+    fullName: 'Steven Piedra Villalta',
+    roleTitle: 'Full Stack Developer | AI Developer | Product Manager',
+    bioParagraph1: 'Data Analyst and Full Stack Developer with experience in data analysis and full-stack development. Experienced in data collection and quantitative and qualitative analysis, using tools such as SQL, Python, Power BI, Tableau, and Excel.',
+    bioParagraph2: 'Experienced in payment methods and emerging technologies, as well as tools such as .NET Core, React, REST API, Microservices, Azure Database, and MySQL. Deeply passionate about data and how technology enhances business performance and enables more efficient delivery.',
+    experienceYears: 4,
+    technologiesCount: 16,
+    completedProjectsCount: 10,
+    cvUrl: 'assets/CV_Steven_Piedra.pdf',
+    githubUrl: 'https://github.com/StevenPiedra-dev',
+    linkedinUrl: 'https://www.linkedin.com/in/stevenpiedra/',
+    email: 'steven.piedra02@gmail.com',
+    timeline: [
+      {
+        year: '2024',
+        period: 'Oct 2024 - Present',
+        role: 'Investigation Analyst I',
+        company: 'BAC, Calle Blancos',
+        description: 'Experience using data analysis tools in the financial field and creating executive presentations for senior management and vice presidents. Experience in quantitative and qualitative analysis of Fintechs and payment methods in general. Experience with emerging technologies and businesses that generate new revenue streams for the organization.',
+        tags: ['Data Analysis', 'Fintech', 'Presentations'],
+        icon: '📊',
+        type: 'work'
+      },
+      {
+        year: '2023',
+        period: 'Jun 2023 - Sep 2024',
+        role: 'Critical Processes Assistant',
+        company: 'BAC, Curridabat',
+        description: 'I created and managed dashboards in Power BI and Tableau, managed processes with large amounts of data (data acquisition, transformation, and loading). I prepared presentations for senior executives and provided management support.',
+        tags: ['Power BI', 'Tableau', 'Data Transformation'],
+        icon: '📈',
+        type: 'work'
+      },
+      {
+        year: '2022',
+        period: 'Jan 2022 - Jan 2023',
+        role: 'Fullstack Developer',
+        company: 'Freelance, San Pedro',
+        description: 'Developing using .NetCore, Azure Database as backend and React as the framework, the project was developed implementing RESTful APIs, authentication modules, and relational database models. Delivered production-ready deployment and user training.',
+        tags: ['.NET Core', 'Azure', 'React', 'REST API'],
+        icon: '💻',
+        type: 'work'
+      }
+    ],
+    certifications: [
+      { icon: '🎓', name: 'Professional MBA with an emphasis in Management', issuer: 'Universidad de Costa Rica (UCR)', year: 'Sep 2025 - Present', level: 'In-Progress' },
+      { icon: '📊', name: 'Big Data Specialization', issuer: 'Universidad Fidélitas', year: 'Jan 2022 - May 2023', level: 'Completed' },
+      { icon: '💻', name: 'Bachelor’s Degree in Systems Engineering', issuer: 'Universidad Fidélitas', year: 'Jan 2020 - Sep 2023', level: 'Completed' }
+    ],
+    values: [
+      { icon: '🏗️', title: 'Clean Code', description: 'I prioritize maintainable, scalable, and well-documented code following SOLID principles and Clean Architecture.' },
+      { icon: '🚀', title: 'Continuous Delivery', description: 'Agile methodologies and CI/CD to deliver value quickly and incrementally to the client.' },
+      { icon: '🤖', title: 'AI-Driven', description: 'I integrate AI capabilities to build intelligent solutions that solve complex problems.' },
+      { icon: '👥', title: 'Collaboration', description: 'I believe in teamwork, open communication, and collective growth to achieve great goals.' }
+    ]
+  };
+
   private initialMetrics: SiteMetrics = {
     githubRepos: 14,
     totalCommits: 420,
@@ -246,15 +311,8 @@ Utilizamos Dockerfiles multietapa para compilar imágenes ultraligeras basadas e
     articlesPublished: 6,
     blogViews: 12500,
     apisBuilt: 25,
-    techStackMastery: 19,
-    professionalCerts: 8
-  };
-
-  private initialAboutInfo: AboutInfo = {
-    fullName: 'Steven Piedra Villalta',
-    roleTitle: 'Full Stack Developer | AI Developer | Product Manager',
-    bio: 'Desarrollador Full Stack Senior con amplia experiencia en arquitecturas de software escalables, desarrollo de soluciones bancarias, automatización de procesos mediante IA y liderazgo de productos digitales.',
-    experienceYears: 4
+    techStackMastery: 16,
+    professionalCerts: 3
   };
 
   private initialContactMsgs: ContactMessage[] = [
@@ -262,7 +320,7 @@ Utilizamos Dockerfiles multietapa para compilar imágenes ultraligeras basadas e
       name: 'Carlos Rodríguez',
       email: 'carlos.rodriguez@techbank.com',
       subject: 'Oportunidad de desarrollo bancario en C# .NET y Angular',
-      message: 'Hola Steven, nos llamó mucho la atención tu experiencia en arquitecturas bancarias core. Quisiéramos agendar una reunión.'
+      message: 'Hola Steven, nos llamó mucho la atención tu experiencia en arquitecturas bancarias core. Quisiéramos agendar una reunión para discutir una posición técnica.'
     },
     {
       name: 'María Fernández',
@@ -277,7 +335,9 @@ Utilizamos Dockerfiles multietapa para compilar imágenes ultraligeras basadas e
   blogPostsSignal = signal<BlogPost[]>(this.loadStorage(this.BLOGS_KEY, this.initialBlogPosts));
   metricsSignal = signal<SiteMetrics>(this.loadStorage(this.METRICS_KEY, this.initialMetrics));
   aboutInfoSignal = signal<AboutInfo>(this.loadStorage(this.ABOUT_KEY, this.initialAboutInfo));
+  skillsSignal = signal<Skill[]>(this.loadStorage(this.SKILLS_KEY, this.initialSkills));
   contactMsgsSignal = signal<ContactMessage[]>(this.loadStorage(this.CONTACT_MSGS_KEY, this.initialContactMsgs));
+  userVotesSignal = signal<{ projects: number[]; blogs: number[] }>(this.loadStorage(this.USER_VOTES_KEY, { projects: [], blogs: [] }));
 
   private loadStorage<T>(key: string, fallback: T): T {
     try {
@@ -300,7 +360,7 @@ Utilizamos Dockerfiles multietapa para compilar imágenes ultraligeras basadas e
 
   addProject(project: Omit<Project, 'id'>): void {
     const newId = Date.now();
-    const newProj: Project = { ...project, id: newId };
+    const newProj: Project = { ...project, id: newId, stars: project.stars ?? 0 };
     const updated = [newProj, ...this.projectsSignal()];
     this.projectsSignal.set(updated);
     this.saveStorage(this.PROJECTS_KEY, updated);
@@ -318,15 +378,36 @@ Utilizamos Dockerfiles multietapa para compilar imágenes ultraligeras basadas e
     this.saveStorage(this.PROJECTS_KEY, updated);
   }
 
-  starProject(id: number): void {
-    const updated = this.projectsSignal().map(p => {
+  isProjectStarred(id: number): boolean {
+    return this.userVotesSignal().projects.includes(id);
+  }
+
+  toggleProjectStar(id: number): boolean {
+    const votes = this.userVotesSignal();
+    const alreadyStarred = votes.projects.includes(id);
+    const updatedStarred = alreadyStarred
+      ? votes.projects.filter(pId => pId !== id)
+      : [...votes.projects, id];
+
+    const updatedVotes = { ...votes, projects: updatedStarred };
+    this.userVotesSignal.set(updatedVotes);
+    this.saveStorage(this.USER_VOTES_KEY, updatedVotes);
+
+    const updatedProjects = this.projectsSignal().map(p => {
       if (p.id === id) {
-        return { ...p, stars: (p.stars || 0) + 1 };
+        const currentStars = p.stars || 0;
+        return { ...p, stars: alreadyStarred ? Math.max(0, currentStars - 1) : currentStars + 1 };
       }
       return p;
     });
-    this.projectsSignal.set(updated);
-    this.saveStorage(this.PROJECTS_KEY, updated);
+    this.projectsSignal.set(updatedProjects);
+    this.saveStorage(this.PROJECTS_KEY, updatedProjects);
+
+    return !alreadyStarred;
+  }
+
+  starProject(id: number): void {
+    this.toggleProjectStar(id);
   }
 
   // --- Blog Methods ---
@@ -336,7 +417,7 @@ Utilizamos Dockerfiles multietapa para compilar imágenes ultraligeras basadas e
 
   addBlogPost(post: Omit<BlogPost, 'id'>): void {
     const newId = Date.now();
-    const newPost: BlogPost = { ...post, id: newId };
+    const newPost: BlogPost = { ...post, id: newId, likes: post.likes ?? 0 };
     const updated = [newPost, ...this.blogPostsSignal()];
     this.blogPostsSignal.set(updated);
     this.saveStorage(this.BLOGS_KEY, updated);
@@ -356,23 +437,48 @@ Utilizamos Dockerfiles multietapa para compilar imágenes ultraligeras basadas e
     this.updateMetrics({ articlesPublished: updated.length });
   }
 
-  likeBlogPost(id: number): void {
-    const updated = this.blogPostsSignal().map(b => {
+  isBlogLiked(id: number): boolean {
+    return this.userVotesSignal().blogs.includes(id);
+  }
+
+  toggleBlogLike(id: number): boolean {
+    const votes = this.userVotesSignal();
+    const alreadyLiked = votes.blogs.includes(id);
+    const updatedLiked = alreadyLiked
+      ? votes.blogs.filter(bId => bId !== id)
+      : [...votes.blogs, id];
+
+    const updatedVotes = { ...votes, blogs: updatedLiked };
+    this.userVotesSignal.set(updatedVotes);
+    this.saveStorage(this.USER_VOTES_KEY, updatedVotes);
+
+    const updatedBlogs = this.blogPostsSignal().map(b => {
       if (b.id === id) {
-        return { ...b, likes: b.likes + 1 };
+        return { ...b, likes: alreadyLiked ? Math.max(0, b.likes - 1) : b.likes + 1 };
       }
       return b;
     });
-    this.blogPostsSignal.set(updated);
-    this.saveStorage(this.BLOGS_KEY, updated);
+    this.blogPostsSignal.set(updatedBlogs);
+    this.saveStorage(this.BLOGS_KEY, updatedBlogs);
+
+    return !alreadyLiked;
+  }
+
+  likeBlogPost(id: number): void {
+    this.toggleBlogLike(id);
   }
 
   // --- Metrics Methods ---
   getMetrics(): SiteMetrics {
     const current = this.metricsSignal();
+    const about = this.aboutInfoSignal();
+    const certsCount = about.certifications ? about.certifications.length : 3;
+    const skillsCount = this.skillsSignal().length;
     return {
       ...current,
-      articlesPublished: this.blogPostsSignal().length
+      articlesPublished: this.blogPostsSignal().length,
+      professionalCerts: certsCount,
+      techStackMastery: skillsCount
     };
   }
 
@@ -392,6 +498,30 @@ Utilizamos Dockerfiles multietapa para compilar imágenes ultraligeras basadas e
     this.saveStorage(this.ABOUT_KEY, info);
   }
 
+  // --- Skills Methods ---
+  getSkills(): Skill[] {
+    return this.skillsSignal();
+  }
+
+  addSkill(skill: Skill): void {
+    const updated = [...this.skillsSignal(), skill];
+    this.skillsSignal.set(updated);
+    this.saveStorage(this.SKILLS_KEY, updated);
+  }
+
+  updateSkill(index: number, skill: Skill): void {
+    const updated = [...this.skillsSignal()];
+    updated[index] = skill;
+    this.skillsSignal.set(updated);
+    this.saveStorage(this.SKILLS_KEY, updated);
+  }
+
+  deleteSkill(index: number): void {
+    const updated = this.skillsSignal().filter((_, i) => i !== index);
+    this.skillsSignal.set(updated);
+    this.saveStorage(this.SKILLS_KEY, updated);
+  }
+
   // --- Contact Messages Methods ---
   getContactMessages(): ContactMessage[] {
     return this.contactMsgsSignal();
@@ -409,36 +539,12 @@ Utilizamos Dockerfiles multietapa para compilar imágenes ultraligeras basadas e
     this.saveStorage(this.CONTACT_MSGS_KEY, updated);
   }
 
-  // --- Skills & Links ---
-  getSkills(): Skill[] {
-    return [
-      { name: 'Angular', level: 80, category: 'frontend', description: 'Standalone components, Signals, RxJS, state management, reactive forms' },
-      { name: 'React', level: 70, category: 'frontend', description: 'Hooks, Context API, Redux Toolkit, Next.js integration' },
-      { name: 'Next.js', level: 75, category: 'frontend', description: 'App Router, Server Components, SSR/SSG, API Routes' },
-      { name: 'TypeScript', level: 85, category: 'frontend', description: 'Strict typing, generics, interfaces, OOP & functional paradigms' },
-      { name: 'Tailwind CSS', level: 75, category: 'frontend', description: 'Utility-first styling, custom themes, responsive layouts' },
-      { name: 'Python', level: 75, category: 'backend', description: 'Data structures, backend services, script automation, AI pipelines' },
-      { name: 'FastAPI', level: 65, category: 'backend', description: 'Async RESTful APIs, Pydantic validation, OpenAPI specs' },
-      { name: 'Node.js', level: 60, category: 'backend', description: 'Express framework, REST services, async event loop' },
-      { name: 'C# / .NET', level: 60, category: 'backend', description: 'ASP.NET Core, Entity Framework, enterprise backend architectures' },
-      { name: 'SQL', level: 70, category: 'databases', description: 'Relational data modeling, complex joins, index optimization' },
-      { name: 'PostgreSQL', level: 70, category: 'databases', description: 'Advanced queries, JSONB support, transaction management' },
-      { name: 'MongoDB', level: 60, category: 'databases', description: 'NoSQL collections, aggregation framework, schema design' },
-      { name: 'Redis', level: 50, category: 'databases', description: 'In-memory key-value cache, pub/sub messaging' },
-      { name: 'Firebase', level: 70, category: 'databases', description: 'Firestore NoSQL, real-time database, Authentication, Functions' },
-      { name: 'Git & GitHub', level: 85, category: 'tools', description: 'Branch management, pull requests, GitHub Actions CI/CD' },
-      { name: 'Docker', level: 65, category: 'cloud', description: 'Containerization, Docker Compose, multi-stage builds' },
-      { name: 'Agile & Scrum', level: 85, category: 'methodologies', description: 'Sprint planning, backlog prioritization, product management' },
-      { name: 'AI & Prompt Eng.', level: 80, category: 'methodologies', description: 'LLM integration, RAG architectures, prompt optimization' },
-      { name: 'UI/UX Design', level: 75, category: 'methodologies', description: 'Wireframing, modern design systems, glassmorphism, accessibility' }
-    ];
-  }
-
   getSocialLinks(): SocialLink[] {
+    const about = this.aboutInfoSignal();
     return [
-      { platform: 'GitHub', url: 'https://github.com/StevenPiedra-dev', icon: 'github' },
-      { platform: 'LinkedIn', url: 'https://www.linkedin.com/in/stevenpiedra/', icon: 'linkedin' },
-      { platform: 'Email', url: 'mailto:steven.piedra02@gmail.com', icon: 'email' }
+      { platform: 'GitHub', url: about.githubUrl || 'https://github.com/StevenPiedra-dev', icon: 'github' },
+      { platform: 'LinkedIn', url: about.linkedinUrl || 'https://www.linkedin.com/in/stevenpiedra/', icon: 'linkedin' },
+      { platform: 'Email', url: `mailto:${about.email || 'steven.piedra02@gmail.com'}`, icon: 'email' }
     ];
   }
 }
