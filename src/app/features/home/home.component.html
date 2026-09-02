@@ -39,7 +39,7 @@
               View Projects
             </button>
 
-            <a href="assets/Steven_Piedra_CV.pdf" target="_blank" download="Steven_Piedra_CV.pdf" class="btn btn-outline" aria-label="Download Resume">
+            <a [href]="aboutInfo().cvUrl || 'assets/CV_Steven_Piedra.pdf'" target="_blank" [download]="aboutInfo().cvFileName || 'CV_Steven_Piedra.pdf'" class="btn btn-outline" aria-label="Download Resume">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="btn-icon">
                 <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"></path>
                 <polyline points="7 10 12 15 17 10"></polyline>
@@ -61,7 +61,7 @@
         <div class="hero-visual">
           <div class="avatar-frame">
             <div class="glow-ring"></div>
-            <img src="assets/steven-photo.jpg" alt="Steven Piedra Villalta" class="avatar-img" />
+            <img [src]="aboutInfo().profilePhoto || 'assets/steven-photo.jpg'" alt="Steven Piedra Villalta" class="avatar-img" />
             <div class="tech-chip chip-1">
               <span class="chip-dot"></span> Angular 17
             </div>
@@ -263,9 +263,9 @@
                 </svg>
               </div>
               <div class="cert-info">
-                <span class="cert-number">8+</span>
+                <span class="cert-number">{{ certifications().length }}+</span>
                 <span class="cert-label">Professional Certifications</span>
-                <p class="cert-sub">Cloud Architecture, Angular, C# .NET, AI Solutions</p>
+                <p class="cert-sub">{{ certificationsSub() }}</p>
               </div>
             </div>
 

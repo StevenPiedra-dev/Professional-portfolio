@@ -20,10 +20,11 @@ import { PortfolioService } from '../../../core/services/portfolio.service';
 
         <!-- Header -->
         <div class="modal-header-bg" [style.background]="post.gradient">
-          <span class="modal-icon">{{ post.icon }}</span>
+          <img *ngIf="post.coverImage" [src]="post.coverImage" [alt]="post.title" class="modal-cover-img" />
+          <span *ngIf="!post.coverImage" class="modal-icon">{{ post.icon || '📝' }}</span>
           <div class="modal-header-overlay"></div>
           <div class="likes-badge" (click)="onLike()" title="Dar me gusta">
-            ❤️ {{ post.likes }} Likes
+            {{ isLiked() ? '❤️' : '🤍' }} {{ getLikes() }} Likes
           </div>
         </div>
 
@@ -134,10 +135,20 @@ import { PortfolioService } from '../../../core/services/portfolio.service';
       filter: drop-shadow(0 8px 16px rgba(0,0,0,0.3));
     }
 
+    .modal-cover-img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      z-index: 1;
+    }
+
     .modal-header-overlay {
       position: absolute;
       inset: 0;
       background: linear-gradient(to bottom, transparent 0%, #0F172A 100%);
+      z-index: 2;
     }
 
     .likes-badge {

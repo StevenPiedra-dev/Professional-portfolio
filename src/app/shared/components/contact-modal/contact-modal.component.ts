@@ -2,6 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { ContactService } from '../../../core/services/contact.service';
+import { PortfolioService } from '../../../core/services/portfolio.service';
 
 @Component({
   selector: 'app-contact-modal',
@@ -13,6 +14,7 @@ import { ContactService } from '../../../core/services/contact.service';
 export class ContactModalComponent {
   private fb = inject(FormBuilder);
   public contactService = inject(ContactService);
+  private portfolioService = inject(PortfolioService);
 
   isSubmitting = signal(false);
   submitSuccess = signal(false);
@@ -45,6 +47,9 @@ export class ContactModalComponent {
       subject: this.contactForm.value.subject || 'Job Proposal',
       message: this.contactForm.value.message || ''
     };
+
+    // Save locally into PortfolioService for immediate Admin Panel display
+    this.portfolioService.addContactMessage(formData);
 
     // Use formsubmit.co to send email without backend/api keys.
     fetch("https://formsubmit.co/ajax/steven.piedra02@gmail.com", {

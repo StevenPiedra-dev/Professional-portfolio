@@ -20,15 +20,18 @@ export interface TimelineItem {
   period: string;
   role: string;
   company: string;
+  location?: string;
+  companyLogo?: string;
   description: string;
   tags: string[];
-  icon: string;
+  icon?: string;
   type: 'work' | 'education';
 }
 
 export interface CertificationItem {
   id?: number;
-  icon: string;
+  icon?: string;
+  logo?: string;
   name: string;
   issuer: string;
   year: string;
@@ -49,7 +52,9 @@ export interface AboutInfo {
   experienceYears: number;
   technologiesCount: number;
   completedProjectsCount: number;
+  profilePhoto?: string;
   cvUrl: string;
+  cvFileName?: string;
   githubUrl: string;
   linkedinUrl: string;
   email: string;
@@ -67,7 +72,8 @@ export interface BlogPost {
   tags: string[];
   readTime: number;
   date: string;
-  icon: string;
+  icon?: string;
+  coverImage?: string;
   featured: boolean;
   gradient: string;
   likes: number;
@@ -87,6 +93,7 @@ export interface SiteMetrics {
 export type SkillCategory = 'frontend' | 'backend' | 'databases' | 'cloud' | 'tools' | 'methodologies';
 
 export interface Skill {
+  id?: number;
   name: string;
   level: number; // 0-100
   category: SkillCategory;

@@ -46,7 +46,8 @@ import { BlogDetailModalComponent } from '../../shared/components/blog-detail-mo
         <div class="section-container">
           <div class="featured-article">
             <div class="featured-visual" [style.background]="featuredPost()!.gradient">
-              <span class="featured-icon">{{ featuredPost()!.icon }}</span>
+              <img *ngIf="featuredPost()!.coverImage" [src]="featuredPost()!.coverImage" [alt]="featuredPost()!.title" class="featured-cover-img" />
+              <span *ngIf="!featuredPost()!.coverImage" class="featured-icon">{{ featuredPost()!.icon || '📝' }}</span>
               <div class="featured-visual-overlay"></div>
               <div class="featured-visual-badge">
                 <span>⭐ Artículo destacado</span>
@@ -64,7 +65,9 @@ import { BlogDetailModalComponent } from '../../shared/components/blog-detail-mo
               <div class="featured-footer">
                 <div class="post-stats">
                   <span class="post-stat">⏱️ {{ featuredPost()!.readTime }} min lectura</span>
-                  <span class="post-stat">❤️ {{ featuredPost()!.likes }}</span>
+                  <button class="card-like-btn" [class.liked]="isLiked(featuredPost()!.id)" (click)="onLikePost($event, featuredPost()!)" [title]="isLiked(featuredPost()!.id) ? 'Quitar like' : 'Dar me gusta'">
+                    {{ isLiked(featuredPost()!.id) ? '❤️' : '🤍' }} {{ getLikes(featuredPost()!) }}
+                  </button>
                 </div>
                 <button class="read-btn" (click)="onReadPost(featuredPost()!)">
                   Leer artículo →
@@ -144,7 +147,8 @@ import { BlogDetailModalComponent } from '../../shared/components/blog-detail-mo
               (keydown.enter)="onReadPost(post)"
             >
               <div class="post-visual" [style.background]="post.gradient">
-                <span class="post-icon">{{ post.icon }}</span>
+                <img *ngIf="post.coverImage" [src]="post.coverImage" [alt]="post.title" class="post-cover-img" />
+                <span *ngIf="!post.coverImage" class="post-icon">{{ post.icon || '📝' }}</span>
                 <div class="post-visual-overlay"></div>
               </div>
               <div class="post-body">
@@ -160,7 +164,9 @@ import { BlogDetailModalComponent } from '../../shared/components/blog-detail-mo
                   <div class="post-info-row">
                     <span class="read-time">⏱️ {{ post.readTime }} min</span>
                     <div class="post-engagements">
-                      <span>❤️ {{ post.likes }}</span>
+                      <button class="card-like-btn" [class.liked]="isLiked(post.id)" (click)="onLikePost($event, post)" [title]="isLiked(post.id) ? 'Quitar like' : 'Dar me gusta'">
+                        {{ isLiked(post.id) ? '❤️' : '🤍' }} {{ getLikes(post) }}
+                      </button>
                     </div>
                   </div>
                   <div class="post-tags">
@@ -351,6 +357,42 @@ import { BlogDetailModalComponent } from '../../shared/components/blog-detail-mo
       position: absolute;
       inset: 0;
       background: linear-gradient(to right, transparent 0%, rgba(15,23,42,0.6) 100%);
+      z-index: 2;
+    }
+
+    .featured-cover-img, .post-cover-img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      z-index: 1;
+    }
+
+    .card-like-btn {
+      background: rgba(239, 68, 68, 0.12);
+      color: #F87171;
+      border: 1px solid rgba(239, 68, 68, 0.25);
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.2s ease;
+
+      &:hover {
+        background: rgba(239, 68, 68, 0.25);
+        transform: scale(1.05);
+      }
+
+      &.liked {
+        background: rgba(239, 68, 68, 0.3);
+        border-color: #EF4444;
+        box-shadow: 0 0 10px rgba(239, 68, 68, 0.3);
+      }
     }
 
     .featured-visual-badge {
@@ -872,6 +914,20 @@ export class BlogComponent {
       ai: 'IA & ML', frontend: 'Frontend', backend: 'Backend', devops: 'DevOps', product: 'Producto'
     };
     return labels[cat] || cat;
+  }
+
+  isLiked(id: number): boolean {
+    return this.portfolioService.isBlogLiked(id);
+  }
+
+  getLikes(post: BlogPost): number {
+    const live = this.posts().find(p => p.id === post.id);
+    return live ? live.likes : post.likes;
+  }
+
+  onLikePost(event: MouseEvent, post: BlogPost) {
+    event.stopPropagation();
+    this.portfolioService.toggleBlogLike(post.id);
   }
 
   clearSearch() {

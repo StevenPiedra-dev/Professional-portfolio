@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { PortfolioService } from '../../core/services/portfolio.service';
@@ -57,41 +57,41 @@ interface ValueCard {
 
           <div class="bio-col">
             <span class="badge">About me</span>
-            <h1>Steven <span class="gradient-text">Piedra Villalta</span></h1>
+            <h1>{{ aboutInfo().fullName ? (aboutInfo().fullName.split(' ')[0]) : 'Steven' }} <span class="gradient-text">{{ aboutInfo().fullName ? (aboutInfo().fullName.split(' ').slice(1).join(' ')) : 'Piedra Villalta' }}</span></h1>
             <p class="bio-roles">
               <span class="role-chip">⚡ Full Stack Developer</span>
               <span class="role-chip">📊 Data Analyst</span>
             </p>
             <p class="bio-text">
-              Data Analyst and Full Stack Developer with experience in data analysis and full-stack development. Experienced in data collection and quantitative and qualitative analysis, using tools such as <strong>SQL, Python, Power BI, Tableau, and Excel</strong>. 
+              {{ aboutInfo().bioParagraph1 || 'Data Analyst and Full Stack Developer with experience in data analysis and full-stack development. Experienced in data collection and quantitative and qualitative analysis, using tools such as SQL, Python, Power BI, Tableau, and Excel.' }}
             </p>
             <p class="bio-text">
-              Experienced in payment methods and emerging technologies, as well as tools such as <strong>.NET Core, React, REST API, Microservices, Azure Database, and MySQL</strong>. Deeply passionate about data and how technology enhances business performance and enables more efficient delivery.
+              {{ aboutInfo().bioParagraph2 || 'Experienced in payment methods and emerging technologies, as well as tools such as .NET Core, React, REST API, Microservices, Azure Database, and MySQL. Deeply passionate about data and how technology enhances business performance and enables more efficient delivery.' }}
             </p>
 
             <div class="bio-metrics">
               <div class="bio-metric">
-                <span class="metric-num">3+</span>
+                <span class="metric-num">{{ aboutInfo().experienceYears || 4 }}+</span>
                 <span class="metric-label">Years of Experience</span>
               </div>
               <div class="bio-divider"></div>
               <div class="bio-metric">
-                <span class="metric-num">15+</span>
+                <span class="metric-num">{{ skills().length }}+</span>
                 <span class="metric-label">Technologies</span>
               </div>
               <div class="bio-divider"></div>
               <div class="bio-metric">
-                <span class="metric-num">10+</span>
+                <span class="metric-num">{{ aboutInfo().completedProjectsCount || 10 }}+</span>
                 <span class="metric-label">Completed Projects</span>
               </div>
             </div>
 
             <div class="bio-actions">
-              <a href="https://github.com/StevenPiedra-dev" target="_blank" rel="noopener" class="btn-primary">
+              <a [href]="aboutInfo().githubUrl || 'https://github.com/StevenPiedra-dev'" target="_blank" rel="noopener" class="btn-primary">
                 View GitHub
               </a>
-              <a href="mailto:steven.piedra02@gmail.com" class="btn-outline">
-                Contact Me
+              <a [href]="aboutInfo().cvUrl || 'assets/CV_Steven_Piedra.pdf'" target="_blank" [download]="aboutInfo().cvFileName || 'CV_Steven_Piedra.pdf'" class="btn-outline">
+                Download CV
               </a>
             </div>
           </div>
@@ -187,7 +187,8 @@ interface ValueCard {
               [class.education]="event.type === 'education'"
             >
               <div class="timeline-dot">
-                <span>{{ event.icon }}</span>
+                <img *ngIf="getCompanyLogo(event)" [src]="getCompanyLogo(event)" [alt]="event.company" class="company-logo-img" />
+                <span *ngIf="!getCompanyLogo(event)">{{ event.icon || '💼' }}</span>
               </div>
               <div class="timeline-card">
                 <div class="timeline-card-header">
@@ -765,8 +766,8 @@ interface ValueCard {
       left: 50%;
       top: 1rem;
       transform: translateX(-50%);
-      width: 40px;
-      height: 40px;
+      width: 44px;
+      height: 44px;
       border-radius: 50%;
       background: var(--surface-card);
       border: 2px solid var(--blue-500);
@@ -775,6 +776,15 @@ interface ValueCard {
       justify-content: center;
       font-size: 1.1rem;
       z-index: 1;
+      overflow: hidden;
+      box-shadow: 0 0 15px rgba(59, 130, 246, 0.25);
+
+      .company-logo-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: 50%;
+      }
 
       @media (max-width: 767px) {
         left: 0;
@@ -1010,10 +1020,8 @@ interface ValueCard {
 export class AboutComponent implements OnInit {
   private portfolioService = inject(PortfolioService);
 
-  skills = signal<Skill[]>([]);
+  skills = this.portfolioService.skillsSignal;
   activeSkillCat = signal<string>('all');
-  donutSegments = signal<DonutSegment[]>([]);
-  barData = signal<BarData[]>([]);
 
   // Reactive about info from service
   aboutInfo = this.portfolioService.aboutInfoSignal;
@@ -1038,6 +1046,29 @@ export class AboutComponent implements OnInit {
     { id: 'methodologies', label: 'Methods', icon: '🎯' }
   ];
 
+  // Computed Donut Chart from dynamic skills
+  donutSegments = computed(() => {
+    const allSkills = this.skills();
+    const counts: Record<string, number> = {};
+    allSkills.forEach(s => { counts[s.category] = (counts[s.category] || 0) + 1; });
+    const colors: Record<string, string> = {
+      frontend: '#60A5FA', backend: '#34D399', databases: '#C084FC',
+      cloud: '#FBBF24', tools: '#F472B6', methodologies: '#38BDF8'
+    };
+    return Object.keys(counts).map(cat => ({
+      label: cat.charAt(0).toUpperCase() + cat.slice(1),
+      value: counts[cat],
+      color: colors[cat] || '#3B82F6'
+    }));
+  });
+
+  // Computed Bar Chart from dynamic skills
+  barData = computed(() => {
+    const allSkills = this.skills();
+    const top5 = [...allSkills].sort((a, b) => b.level - a.level).slice(0, 5);
+    return top5.map(s => ({ label: s.name, value: s.level, category: s.category }));
+  });
+
   filteredSkills() {
     const cat = this.activeSkillCat();
     if (cat === 'all') return this.skills();
@@ -1045,25 +1076,19 @@ export class AboutComponent implements OnInit {
   }
 
   ngOnInit() {
-    const allSkills = this.portfolioService.getSkills();
-    this.skills.set(allSkills);
+    // Auto loaded from signals
+  }
 
-    // Donut
-    const counts: Record<string, number> = {};
-    allSkills.forEach(s => { counts[s.category] = (counts[s.category] || 0) + 1; });
-    const colors: Record<string, string> = {
-      frontend: '#60A5FA', backend: '#34D399', databases: '#C084FC',
-      cloud: '#FBBF24', tools: '#F472B6', methodologies: '#38BDF8'
-    };
-    this.donutSegments.set(Object.keys(counts).map(cat => ({
-      label: cat.charAt(0).toUpperCase() + cat.slice(1),
-      value: counts[cat],
-      color: colors[cat] || '#3B82F6'
-    })));
-
-    // Bar
-    const top5 = [...allSkills].sort((a, b) => b.level - a.level).slice(0, 5);
-    this.barData.set(top5.map(s => ({ label: s.name, value: s.level, category: s.category })));
+  getCompanyLogo(event: any): string | null {
+    if (event.companyLogo) return event.companyLogo;
+    const company = (event.company || '').toLowerCase();
+    if (company.includes('bac')) {
+      return 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" rx="20" fill="%23E11925"/><path d="M25 30h28c8.8 0 16 7.2 16 16s-7.2 16-16 16H25V30zm14 20h14c2.2 0 4-1.8 4-4s-1.8-4-4-4H39v8zm0 10v10h16c3.3 0 6-2.7 6-6s-2.7-6-6-6H39v2z" fill="%23ffffff"/></svg>';
+    }
+    if (company.includes('freelance')) {
+      return 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" rx="20" fill="%233B82F6"/><path d="M35 32l-15 18 15 18M65 32l15 18-15 18M54 28l-8 44" stroke="%23ffffff" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>';
+    }
+    return null;
   }
 
   getLevelLabel(level: number): string {

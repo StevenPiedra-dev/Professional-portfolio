@@ -32,8 +32,8 @@ import { ImageCarouselComponent } from '../image-carousel/image-carousel.compone
 
           <!-- Interactive Stars Counter Chip -->
           <div class="meta-chips-row">
-            <button class="star-chip-btn" [class.starred]="isStarred()" (click)="onStarClick($event)" [title]="isStarred() ? 'Quitar estrella' : 'Dar estrella'">
-              {{ isStarred() ? '⭐' : '☆' }} {{ getStars() }} {{ isStarred() ? 'Estrellado' : 'Dar Estrella' }}
+            <button class="star-chip-btn" [class.starred]="isStarred()" (click)="onStarClick($event)" [title]="isStarred() ? 'Quitar calificación' : 'Calificar proyecto'">
+              {{ isStarred() ? '⭐' : '☆' }} {{ getStars() }} {{ isStarred() ? 'Calificado' : 'Dar Estrella' }}
             </button>
             <span class="year-chip" *ngIf="project.year">{{ project.year }}</span>
           </div>

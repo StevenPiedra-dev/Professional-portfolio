@@ -46,7 +46,8 @@ export class HomeComponent implements OnInit {
   private contactService = inject(ContactService);
 
   // Data signals
-  skills = signal<Skill[]>([]);
+  skills = this.portfolioService.skillsSignal;
+  aboutInfo = this.portfolioService.aboutInfoSignal;
   projects = computed(() => this.portfolioService.projectsSignal().filter(p => p.featured));
   selectedProject = signal<Project | null>(null);
 
@@ -56,13 +57,57 @@ export class HomeComponent implements OnInit {
 
   metrics = computed(() => this.portfolioService.getMetrics());
 
+  certifications = computed(() => this.aboutInfo().certifications || []);
+  certificationsSub = computed(() => {
+    const list = this.certifications();
+    if (!list.length) return 'Cloud Architecture, Angular, C# .NET, AI Solutions';
+    return list.map(c => c.name).slice(0, 3).join(' • ');
+  });
+
   // Filtering
   selectedCategory = signal<string>('all');
 
-  // Chart data signals
-  stackDonutSegments = signal<DonutSegment[]>([]);
-  topSkillsBarData = signal<BarData[]>([]);
-  commitLinePoints = signal<PointData[]>([]);
+  // Computed chart data
+  topSkillsBarData = computed(() => {
+    const sorted = [...this.skills()].sort((a, b) => b.level - a.level).slice(0, 5);
+    return sorted.map(s => ({
+      label: s.name,
+      value: s.level,
+      category: s.category
+    }));
+  });
+
+  stackDonutSegments = computed(() => {
+    const categoryCounts: Record<string, number> = {};
+    this.skills().forEach(s => {
+      categoryCounts[s.category] = (categoryCounts[s.category] || 0) + 1;
+    });
+
+    const donutColors: Record<string, string> = {
+      frontend: '#60A5FA',
+      backend: '#34D399',
+      databases: '#C084FC',
+      cloud: '#FBBF24',
+      tools: '#F472B6',
+      methodologies: '#38BDF8'
+    };
+
+    return Object.keys(categoryCounts).map(cat => ({
+      label: cat.charAt(0).toUpperCase() + cat.slice(1),
+      value: categoryCounts[cat],
+      color: donutColors[cat] || '#3B82F6'
+    }));
+  });
+
+  commitLinePoints = signal<PointData[]>([
+    { label: 'Jan', value: 28 },
+    { label: 'Feb', value: 45 },
+    { label: 'Mar', value: 32 },
+    { label: 'Apr', value: 64 },
+    { label: 'May', value: 50 },
+    { label: 'Jun', value: 78 },
+    { label: 'Jul', value: 85 }
+  ]);
 
   categoriesList: { id: string; label: string }[] = [
     { id: 'all', label: 'All Stack' },
@@ -103,13 +148,6 @@ export class HomeComponent implements OnInit {
   });
 
   ngOnInit() {
-    // Load skills
-    const allSkills = this.portfolioService.getSkills();
-    this.skills.set(allSkills);
-
-    // Prepare chart data
-    this.prepareChartData(allSkills);
-
     // Fetch GitHub Live Data
     this.githubService.getProfile().subscribe(profile => this.githubProfile.set(profile));
     this.githubService.getRepos().subscribe(repos => this.githubRepos.set(repos));
@@ -165,44 +203,5 @@ export class HomeComponent implements OnInit {
 
   openContactModal() {
     this.contactService.openModal();
-  }
-
-  private prepareChartData(skillsList: Skill[]) {
-    const sorted = [...skillsList].sort((a, b) => b.level - a.level).slice(0, 5);
-    this.topSkillsBarData.set(sorted.map(s => ({
-      label: s.name,
-      value: s.level,
-      category: s.category
-    })));
-
-    const categoryCounts: Record<string, number> = {};
-    skillsList.forEach(s => {
-      categoryCounts[s.category] = (categoryCounts[s.category] || 0) + 1;
-    });
-
-    const donutColors: Record<string, string> = {
-      frontend: '#60A5FA',
-      backend: '#34D399',
-      databases: '#C084FC',
-      cloud: '#FBBF24',
-      tools: '#F472B6',
-      methodologies: '#38BDF8'
-    };
-
-    this.stackDonutSegments.set(Object.keys(categoryCounts).map(cat => ({
-      label: cat.charAt(0).toUpperCase() + cat.slice(1),
-      value: categoryCounts[cat],
-      color: donutColors[cat] || '#3B82F6'
-    })));
-
-    this.commitLinePoints.set([
-      { label: 'Jan', value: 28 },
-      { label: 'Feb', value: 45 },
-      { label: 'Mar', value: 32 },
-      { label: 'Apr', value: 64 },
-      { label: 'May', value: 50 },
-      { label: 'Jun', value: 78 },
-      { label: 'Jul', value: 85 }
-    ]);
   }
 }
