@@ -9,6 +9,7 @@ export interface EmailParams {
   email: string;
   subject: string;
   message: string;
+  to_email?: string;
   [key: string]: unknown;
 }
 
@@ -46,7 +47,7 @@ export class EmailJsService {
     const templateParams = {
       from_name: params.name,
       reply_to: params.email,
-      to_email: 'steven.piedra02@gmail.com',
+      to_email: params.to_email || 'steven.piedra02@gmail.com',
       subject: params.subject || 'Portfolio Inquiry',
       message: params.message
     };

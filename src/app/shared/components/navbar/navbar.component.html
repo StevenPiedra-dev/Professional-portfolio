@@ -3,14 +3,14 @@
 
     <!-- BRAND LOGO & TITLE -->
     <a class="nav-brand" [routerLink]="isAdmin ? null : '/'" (click)="closeMenu()" aria-label="Steven Piedra Villalta - Home">
-      <div class="logo-wrapper" (click)="onLogoClick($event)" title="{{ isAdmin ? 'Triple-clic para volver a vista usuario' : 'Steven Piedra Villalta' }}">
+      <div class="logo-wrapper" (click)="onLogoClick($event)" title="{{ isAdmin ? 'Triple-click to return to user view' : 'Steven Piedra Villalta' }}">
         <img src="assets/sp-logo.svg" alt="SP Logo" class="brand-img" />
         <span class="admin-badge" *ngIf="isAdmin">ADMIN</span>
       </div>
       <div class="brand-text">
         <span class="brand-name">Steven Piedra Villalta</span>
         <span class="brand-subtitle" *ngIf="!isAdmin">Full Stack Developer | AI Developer | Product Manager</span>
-        <span class="brand-subtitle admin-subtitle" *ngIf="isAdmin">🛡️ Vista Administrador — Triple-clic para salir</span>
+        <span class="brand-subtitle admin-subtitle" *ngIf="isAdmin">🛡️ Admin Console — Triple-click to exit</span>
       </div>
     </a>
 

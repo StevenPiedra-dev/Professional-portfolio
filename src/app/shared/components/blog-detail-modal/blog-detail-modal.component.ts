@@ -11,7 +11,7 @@ import { PortfolioService } from '../../../core/services/portfolio.service';
     <div class="modal-backdrop" (click)="closeModal()" role="dialog" aria-modal="true" *ngIf="post">
       <div class="modal-card" (click)="$event.stopPropagation()">
         <!-- Close button -->
-        <button class="close-btn" (click)="closeModal()" aria-label="Cerrar artículo">
+        <button class="close-btn" (click)="closeModal()" aria-label="Close article">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <line x1="18" y1="6" x2="6" y2="18"></line>
             <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -23,7 +23,7 @@ import { PortfolioService } from '../../../core/services/portfolio.service';
           <img *ngIf="post.coverImage" [src]="post.coverImage" [alt]="post.title" class="modal-cover-img" />
           <span *ngIf="!post.coverImage" class="modal-icon">{{ post.icon || '📝' }}</span>
           <div class="modal-header-overlay"></div>
-          <div class="likes-badge" (click)="onLike()" title="Dar me gusta">
+          <div class="likes-badge" (click)="onLike()" title="Like">
             {{ isLiked() ? '❤️' : '🤍' }} {{ getLikes() }} Likes
           </div>
         </div>
@@ -33,7 +33,7 @@ import { PortfolioService } from '../../../core/services/portfolio.service';
           <div class="modal-meta">
             <span class="cat-badge" [class]="'cat-' + post.category">{{ getCategoryLabel(post.category) }}</span>
             <span class="meta-item">🗓️ {{ post.date }}</span>
-            <span class="meta-item">⏱️ {{ post.readTime }} min de lectura</span>
+            <span class="meta-item">⏱️ {{ post.readTime }} min read</span>
           </div>
 
           <h1 class="post-title">{{ post.title }}</h1>
@@ -55,7 +55,7 @@ import { PortfolioService } from '../../../core/services/portfolio.service';
             </div>
 
             <button class="like-btn" [class.liked]="isLiked()" (click)="onLike()">
-              {{ isLiked() ? '❤️ \u00a1Gracias! (' + getLikes() + ')' : '🧡 Me gusta (' + getLikes() + ')' }}
+              {{ isLiked() ? '❤️ Thank you! (' + getLikes() + ')' : '🧡 Like (' + getLikes() + ')' }}
             </button>
           </div>
         </div>
@@ -314,9 +314,11 @@ export class BlogDetailModalComponent {
 
   getCategoryLabel(cat: string): string {
     const labels: Record<string, string> = {
-      ai: 'IA & ML', frontend: 'Frontend', backend: 'Backend', devops: 'DevOps', product: 'Producto'
+      ai: 'AI & ML', data: 'Data & Analytics', frontend: 'Frontend', backend: 'Backend',
+      devops: 'DevOps & Cloud', architecture: 'Architecture', career: 'Career & Leadership',
+      fullstack: 'Full Stack', product: 'Product & Agile', others: 'Others'
     };
-    return labels[cat] || cat;
+    return labels[cat] || (cat.charAt(0).toUpperCase() + cat.slice(1));
   }
 
   getParagraphs(): string[] {

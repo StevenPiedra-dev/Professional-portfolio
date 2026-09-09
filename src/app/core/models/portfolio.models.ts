@@ -168,3 +168,42 @@ export interface MetricCard {
   icon: string;
   change?: string;
 }
+
+export interface TechnicalDoc {
+  id: number;
+  title: string;
+  category: string;
+  summary: string;
+  content: string;
+  author?: string;
+  lastUpdated: string;
+  tags: string[];
+  icon?: string;
+  estimatedReadTime?: string;
+  isFeatured?: boolean;
+}
+
+export interface ContactLinkItem {
+  id: string;
+  title: string;
+  subtitle?: string;
+  url: string;
+  icon: string; // 'email' | 'linkedin' | 'github' | 'phone' | 'whatsapp' | 'telegram' | 'location' | 'website' | 'custom'
+  type: 'email' | 'url' | 'tel' | 'custom';
+  isPrimary?: boolean;
+  order?: number;
+}
+
+export interface PortfolioData {
+  projects: Project[];
+  blogPosts: BlogPost[];
+  metrics: SiteMetrics;
+  aboutInfo: AboutInfo;
+  skills: Skill[];
+  contactMsgs: ContactMessage[];
+  technicalDocs?: TechnicalDoc[];
+  contactLinks?: ContactLinkItem[];
+  userVotes?: { projects: number[]; blogs: number[] };
+  lastSyncedAt?: string;
+}
+

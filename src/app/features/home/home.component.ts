@@ -138,7 +138,9 @@ export class HomeComponent implements OnInit {
     });
 
     const labels: Record<string, string> = {
-      ai: 'IA & ML', frontend: 'Frontend', backend: 'Backend', devops: 'DevOps', product: 'Producto'
+      ai: 'AI & ML', data: 'Data & Analytics', frontend: 'Frontend', backend: 'Backend',
+      devops: 'DevOps & Cloud', architecture: 'Architecture', career: 'Career & Leadership',
+      product: 'Product & Agile', others: 'Others'
     };
 
     return Object.keys(catCounts).map(cat => ({

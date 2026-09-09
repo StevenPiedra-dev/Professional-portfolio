@@ -3,8 +3,9 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule, ActivatedRoute } from '@angular/router';
 import { PortfolioService } from '../../core/services/portfolio.service';
+import { CloudSyncService } from '../../core/services/cloud-sync.service';
 import { AuthService } from '../../core/services/auth.service';
-import { Project, BlogPost, SiteMetrics, AboutInfo, ContactMessage, Skill, TimelineItem, CertificationItem, SkillCategory } from '../../core/models/portfolio.models';
+import { Project, BlogPost, SiteMetrics, AboutInfo, ContactMessage, Skill, TimelineItem, CertificationItem, SkillCategory, TechnicalDoc, ContactLinkItem } from '../../core/models/portfolio.models';
 
 @Component({
   selector: 'app-admin',
@@ -18,19 +19,36 @@ import { Project, BlogPost, SiteMetrics, AboutInfo, ContactMessage, Skill, Timel
         <header class="admin-header">
           <div class="header-left">
             <div class="admin-badge">⚡ Management Console</div>
-            <h1>Panel Administrativo <span class="gradient-text">CRUD</span></h1>
-            <p class="subtitle">Gestiona proyectos, artículos, habilidades, experiencia y contenidos en tiempo real.</p>
+            <h1>Admin Dashboard <span class="gradient-text">CRUD</span></h1>
+            <p class="subtitle">Manage projects, blog posts, skills, experience, and content in real-time.</p>
+            <!-- Cloud Sync Status -->
+            <div class="sync-status-bar">
+              <div class="sync-dot" [ngClass]="cloudSync.syncStatus()">
+                <span *ngIf="cloudSync.syncStatus() === 'syncing'" class="sync-spinner"></span>
+              </div>
+              <span class="sync-label">
+                <ng-container [ngSwitch]="cloudSync.syncStatus()">
+                  <span *ngSwitchCase="'synced'">☁️ Cloud Synced</span>
+                  <span *ngSwitchCase="'syncing'">🔄 Syncing...</span>
+                  <span *ngSwitchCase="'offline'">📴 Offline (Saved locally)</span>
+                  <span *ngSwitchCase="'error'">⚠️ Sync error</span>
+                </ng-container>
+              </span>
+              <button class="btn-sync-now" (click)="forceSyncNow()" title="Force Sync">
+                🔁 Sync Now
+              </button>
+            </div>
           </div>
           <div class="header-actions">
-            <a routerLink="/" class="btn btn-outline">👁️ Ver Sitio Público</a>
-            <button class="btn btn-danger" (click)="onLogout()">🔒 Cerrar Sesión</button>
+            <a routerLink="/" class="btn btn-outline">👁️ View Public Site</a>
+            <button class="btn btn-danger" (click)="onLogout()">🔒 Sign Out</button>
           </div>
         </header>
 
         <!-- TABS BAR -->
         <div class="admin-tabs">
           <button class="tab-btn" [class.active]="activeTab() === 'projects'" (click)="activeTab.set('projects')">
-            🚀 Proyectos ({{ projects().length }})
+            🚀 Projects ({{ projects().length }})
           </button>
           <button class="tab-btn" [class.active]="activeTab() === 'blogs'" (click)="activeTab.set('blogs')">
             📝 Blog ({{ blogs().length }})
@@ -39,10 +57,19 @@ import { Project, BlogPost, SiteMetrics, AboutInfo, ContactMessage, Skill, Timel
             👤 About Me & Stacks
           </button>
           <button class="tab-btn" [class.active]="activeTab() === 'metrics'" (click)="activeTab.set('metrics')">
-            📊 Métricas Automáticas
+            📊 Automated Metrics
           </button>
           <button class="tab-btn" [class.active]="activeTab() === 'contact'" (click)="activeTab.set('contact')">
-            💬 Mensajes ({{ contactMsgs().length }})
+            💬 Messages ({{ contactMsgs().length }})
+          </button>
+          <button class="tab-btn" [class.active]="activeTab() === 'contactlinks'" (click)="activeTab.set('contactlinks')">
+            🔗 Contact Channels ({{ contactLinks().length }})
+          </button>
+          <button class="tab-btn" [class.active]="activeTab() === 'docs'" (click)="activeTab.set('docs')">
+            📚 Technical Documentation ({{ technicalDocs().length }})
+          </button>
+          <button class="tab-btn" [class.active]="activeTab() === 'cloudsync'" (click)="activeTab.set('cloudsync')">
+            ☁️ Cloud Sync
           </button>
         </div>
 
@@ -52,10 +79,10 @@ import { Project, BlogPost, SiteMetrics, AboutInfo, ContactMessage, Skill, Timel
         <section *ngIf="activeTab() === 'projects'" class="tab-content">
           <div class="content-bar">
             <div>
-              <h2>Gestión de Proyectos</h2>
-              <p class="section-desc">Crea y edita tus proyectos con carrusel de hasta 3 fotos subidas directamente.</p>
+              <h2>Project Management</h2>
+              <p class="section-desc">Create and edit projects with carousel uploads of up to 3 photos directly.</p>
             </div>
-            <button class="btn btn-primary" (click)="openAddProjectModal()">+ Añadir Proyecto</button>
+            <button class="btn btn-primary" (click)="openAddProjectModal()">+ Add Project</button>
           </div>
 
           <div class="table-responsive">
@@ -63,12 +90,12 @@ import { Project, BlogPost, SiteMetrics, AboutInfo, ContactMessage, Skill, Timel
               <thead>
                 <tr>
                   <th>Preview</th>
-                  <th>Título & Descripción</th>
-                  <th>Categoría</th>
-                  <th>Estrellas ⭐</th>
-                  <th>Destacado</th>
-                  <th>Enlaces</th>
-                  <th>Acciones</th>
+                  <th>Title & Description</th>
+                  <th>Category</th>
+                  <th>Stars ⭐</th>
+                  <th>Featured</th>
+                  <th>Links</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -76,7 +103,7 @@ import { Project, BlogPost, SiteMetrics, AboutInfo, ContactMessage, Skill, Timel
                   <td>
                     <div class="table-thumb-box">
                       <img [src]="p.imageUrl || (p.images && p.images[0]) || 'assets/projects/ecommerce.jpg'" [alt]="p.title" class="table-thumb" />
-                      <span *ngIf="p.images && p.images.length > 1" class="thumb-count">{{ p.images.length }} fotos</span>
+                      <span *ngIf="p.images && p.images.length > 1" class="thumb-count">{{ p.images.length }} photos</span>
                     </div>
                   </td>
                   <td>
@@ -85,17 +112,17 @@ import { Project, BlogPost, SiteMetrics, AboutInfo, ContactMessage, Skill, Timel
                   </td>
                   <td><span class="badge badge-cat">{{ p.category || 'N/A' }}</span></td>
                   <td>⭐ {{ p.stars || 0 }}</td>
-                  <td>{{ p.featured ? '⭐ Destacado' : 'Estándar' }}</td>
+                  <td>{{ p.featured ? '⭐ Featured' : 'Standard' }}</td>
                   <td>
                     <div class="links-group">
                       <a *ngIf="p.liveUrl" [href]="p.liveUrl" target="_blank" class="link-sm">Demo ↗</a>
-                      <a *ngIf="p.githubUrl" [href]="p.githubUrl" target="_blank" class="link-sm">Código ↗</a>
+                      <a *ngIf="p.githubUrl" [href]="p.githubUrl" target="_blank" class="link-sm">Code ↗</a>
                     </div>
                   </td>
                   <td>
                     <div class="action-btns">
-                      <button class="btn-icon edit" (click)="openEditProjectModal(p)" title="Editar">✏️</button>
-                      <button class="btn-icon delete" (click)="deleteProject(p.id)" title="Eliminar">🗑️</button>
+                      <button class="btn-icon edit" (click)="openEditProjectModal(p)" title="Edit">✏️</button>
+                      <button class="btn-icon delete" (click)="deleteProject(p.id)" title="Delete">🗑️</button>
                     </div>
                   </td>
                 </tr>
@@ -110,23 +137,23 @@ import { Project, BlogPost, SiteMetrics, AboutInfo, ContactMessage, Skill, Timel
         <section *ngIf="activeTab() === 'blogs'" class="tab-content">
           <div class="content-bar">
             <div>
-              <h2>Artículos de Blog</h2>
-              <p class="section-desc">Publica artículos con portada personalizada y contenido enriquecido.</p>
+              <h2>Blog Articles</h2>
+              <p class="section-desc">Publish articles with custom cover image and rich content.</p>
             </div>
-            <button class="btn btn-primary" (click)="openAddBlogModal()">+ Añadir Artículo</button>
+            <button class="btn btn-primary" (click)="openAddBlogModal()">+ Add Article</button>
           </div>
 
           <div class="table-responsive">
             <table class="admin-table">
               <thead>
                 <tr>
-                  <th>Portada</th>
-                  <th>Título</th>
-                  <th>Categoría</th>
-                  <th>Fecha</th>
+                  <th>Cover</th>
+                  <th>Title</th>
+                  <th>Category</th>
+                  <th>Date</th>
                   <th>Likes ❤️</th>
-                  <th>Destacado</th>
-                  <th>Acciones</th>
+                  <th>Featured</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -144,11 +171,11 @@ import { Project, BlogPost, SiteMetrics, AboutInfo, ContactMessage, Skill, Timel
                   <td><span class="badge badge-cat">{{ b.category }}</span></td>
                   <td>{{ b.date }}</td>
                   <td>❤️ {{ b.likes || 0 }}</td>
-                  <td>{{ b.featured ? '⭐ Sí' : 'No' }}</td>
+                  <td>{{ b.featured ? '⭐ Yes' : 'No' }}</td>
                   <td>
                     <div class="action-btns">
-                      <button class="btn-icon edit" (click)="openEditBlogModal(b)" title="Editar">✏️</button>
-                      <button class="btn-icon delete" (click)="deleteBlog(b.id)" title="Eliminar">🗑️</button>
+                      <button class="btn-icon edit" (click)="openEditBlogModal(b)" title="Edit">✏️</button>
+                      <button class="btn-icon delete" (click)="deleteBlog(b.id)" title="Delete">🗑️</button>
                     </div>
                   </td>
                 </tr>
@@ -163,25 +190,25 @@ import { Project, BlogPost, SiteMetrics, AboutInfo, ContactMessage, Skill, Timel
         <section *ngIf="activeTab() === 'about'" class="tab-content">
           <div class="content-bar">
             <div>
-              <h2>Gestión de Perfil, Habilidades y Trayectoria</h2>
-              <p class="section-desc">Actualiza tus fotos, CV, biografía, stacks técnicos, experiencia y educación.</p>
+              <h2>Profile, Skills & Career Management</h2>
+              <p class="section-desc">Update your photos, CV, biography, technical stacks, experience, and education.</p>
             </div>
-            <button class="btn btn-primary" (click)="saveAboutInfo()">💾 Guardar Información</button>
+            <button class="btn btn-primary" (click)="saveAboutInfo()">💾 Save Information</button>
           </div>
 
           <!-- Section 1: Photo & CV Uploads -->
           <div class="admin-sub-card">
-            <h3 class="sub-card-title">📸 Archivos y Documentos</h3>
+            <h3 class="sub-card-title">📸 Files and Documents</h3>
             <div class="media-upload-row">
               <!-- Profile Photo -->
               <div class="upload-box">
-                <label class="upload-label">Foto de Perfil (Hero / About)</label>
+                <label class="upload-label">Profile Photo (Hero / About)</label>
                 <div class="avatar-preview-box">
-                  <img [src]="aboutForm.profilePhoto || 'assets/steven-photo.jpg'" alt="Foto de Perfil" class="preview-avatar-img" />
+                  <img [src]="aboutForm.profilePhoto || 'assets/steven-photo.jpg'" alt="Profile Photo" class="preview-avatar-img" />
                   <div class="upload-btn-wrap">
                     <input type="file" id="profile-upload" accept="image/*" (change)="onProfilePhotoUpload($event)" class="file-hidden-input" />
-                    <label for="profile-upload" class="btn btn-sm btn-outline">📁 Cambiar Foto</label>
-                    <button *ngIf="aboutForm.profilePhoto" type="button" class="btn btn-sm btn-danger" (click)="aboutForm.profilePhoto = ''">Quitar</button>
+                    <label for="profile-upload" class="btn btn-sm btn-outline">📁 Change Photo</label>
+                    <button *ngIf="aboutForm.profilePhoto" type="button" class="btn btn-sm btn-danger" (click)="aboutForm.profilePhoto = ''">Remove</button>
                   </div>
                 </div>
               </div>
@@ -194,13 +221,13 @@ import { Project, BlogPost, SiteMetrics, AboutInfo, ContactMessage, Skill, Timel
                     <span class="file-icon">📄</span>
                     <div class="file-meta">
                       <strong>{{ aboutForm.cvFileName || 'CV_Steven_Piedra.pdf' }}</strong>
-                      <span class="file-sub">Documento PDF para descarga pública</span>
+                      <span class="file-sub">PDF document for public download</span>
                     </div>
                   </div>
                   <div class="upload-btn-wrap">
                     <input type="file" id="cv-upload" accept=".pdf,.doc,.docx" (change)="onCvFileUpload($event)" class="file-hidden-input" />
-                    <label for="cv-upload" class="btn btn-sm btn-primary">📤 Subir Nuevo CV</label>
-                    <a *ngIf="aboutForm.cvUrl" [href]="aboutForm.cvUrl" target="_blank" [download]="aboutForm.cvFileName || 'CV.pdf'" class="btn btn-sm btn-outline">👁️ Probar Descarga</a>
+                    <label for="cv-upload" class="btn btn-sm btn-primary">📤 Upload New CV</label>
+                    <a *ngIf="aboutForm.cvUrl" [href]="aboutForm.cvUrl" target="_blank" [download]="aboutForm.cvFileName || 'CV.pdf'" class="btn btn-sm btn-outline">👁️ Test Download</a>
                   </div>
                 </div>
               </div>
@@ -209,26 +236,26 @@ import { Project, BlogPost, SiteMetrics, AboutInfo, ContactMessage, Skill, Timel
 
           <!-- Section 2: Personal Information Form -->
           <div class="admin-sub-card">
-            <h3 class="sub-card-title">👤 Datos Personales & Biografía</h3>
+            <h3 class="sub-card-title">👤 Personal Details & Biography</h3>
             <div class="about-form-grid">
               <div class="form-card">
-                <label>Nombre Completo</label>
+                <label>Full Name</label>
                 <input type="text" class="form-input" [(ngModel)]="aboutForm.fullName" />
               </div>
               <div class="form-card">
-                <label>Título Profesional</label>
+                <label>Professional Title</label>
                 <input type="text" class="form-input" [(ngModel)]="aboutForm.roleTitle" placeholder="Full Stack Developer | AI Developer" />
               </div>
               <div class="form-card" style="grid-column: 1/-1;">
-                <label>Párrafo Biografía 1</label>
+                <label>Biography Paragraph 1</label>
                 <textarea class="form-input" [(ngModel)]="aboutForm.bioParagraph1" rows="3"></textarea>
               </div>
               <div class="form-card" style="grid-column: 1/-1;">
-                <label>Párrafo Biografía 2</label>
+                <label>Biography Paragraph 2</label>
                 <textarea class="form-input" [(ngModel)]="aboutForm.bioParagraph2" rows="3"></textarea>
               </div>
               <div class="form-card">
-                <label>Años de Experiencia</label>
+                <label>Years of Experience</label>
                 <input type="number" class="form-input" [(ngModel)]="aboutForm.experienceYears" />
               </div>
               <div class="form-card">
@@ -240,7 +267,7 @@ import { Project, BlogPost, SiteMetrics, AboutInfo, ContactMessage, Skill, Timel
                 <input type="url" class="form-input" [(ngModel)]="aboutForm.linkedinUrl" />
               </div>
               <div class="form-card">
-                <label>Email de Contacto</label>
+                <label>Contact Email</label>
                 <input type="email" class="form-input" [(ngModel)]="aboutForm.email" />
               </div>
             </div>
@@ -250,21 +277,21 @@ import { Project, BlogPost, SiteMetrics, AboutInfo, ContactMessage, Skill, Timel
           <div class="admin-sub-card">
             <div class="sub-card-head">
               <div>
-                <h3 class="sub-card-title">🛠️ Stacks Tecnológicos & Competencias ({{ skills().length }})</h3>
-                <p class="section-desc">Los gráficos de "Stack Distribution" y "Top Skills" se actualizan automáticamente al editar aquí.</p>
+                <h3 class="sub-card-title">🛠️ Tech Stacks & Competencies ({{ skills().length }})</h3>
+                <p class="section-desc">The "Stack Distribution" and "Top Skills" charts update automatically when edited here.</p>
               </div>
-              <button class="btn btn-sm btn-primary" (click)="openAddSkillModal()">+ Añadir Tecnología</button>
+              <button class="btn btn-sm btn-primary" (click)="openAddSkillModal()">+ Add Technology</button>
             </div>
 
             <div class="table-responsive">
               <table class="admin-table">
                 <thead>
                   <tr>
-                    <th>Nombre</th>
-                    <th>Categoría</th>
-                    <th>Nivel de Dominio</th>
-                    <th>Descripción</th>
-                    <th>Acciones</th>
+                    <th>Name</th>
+                    <th>Category</th>
+                    <th>Proficiency Level</th>
+                    <th>Description</th>
+                    <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -277,11 +304,11 @@ import { Project, BlogPost, SiteMetrics, AboutInfo, ContactMessage, Skill, Timel
                         <span class="level-txt">{{ s.level }}%</span>
                       </div>
                     </td>
-                    <td><span class="table-sub">{{ s.description || 'Sin descripción' }}</span></td>
+                    <td><span class="table-sub">{{ s.description || 'No description' }}</span></td>
                     <td>
                       <div class="action-btns">
-                        <button class="btn-icon edit" (click)="openEditSkillModal(s, i)" title="Editar">✏️</button>
-                        <button class="btn-icon delete" (click)="deleteSkill(i)" title="Eliminar">🗑️</button>
+                        <button class="btn-icon edit" (click)="openEditSkillModal(s, i)" title="Edit">✏️</button>
+                        <button class="btn-icon delete" (click)="deleteSkill(i)" title="Delete">🗑️</button>
                       </div>
                     </td>
                   </tr>
@@ -294,10 +321,10 @@ import { Project, BlogPost, SiteMetrics, AboutInfo, ContactMessage, Skill, Timel
           <div class="admin-sub-card">
             <div class="sub-card-head">
               <div>
-                <h3 class="sub-card-title">💼 Experiencia Laboral & Trayectoria ({{ timelineItems.length }})</h3>
-                <p class="section-desc">Gestiona tus puestos de trabajo con logos de empresa reales.</p>
+                <h3 class="sub-card-title">💼 Work Experience & Timeline ({{ timelineItems.length }})</h3>
+                <p class="section-desc">Manage job positions with actual company logos.</p>
               </div>
-              <button class="btn btn-sm btn-primary" (click)="openAddTimelineModal()">+ Añadir Experiencia</button>
+              <button class="btn btn-sm btn-primary" (click)="openAddTimelineModal()">+ Add Experience</button>
             </div>
 
             <div class="table-responsive">
@@ -305,11 +332,11 @@ import { Project, BlogPost, SiteMetrics, AboutInfo, ContactMessage, Skill, Timel
                 <thead>
                   <tr>
                     <th>Logo</th>
-                    <th>Puesto / Cargo</th>
-                    <th>Empresa & Ubicación</th>
-                    <th>Periodo</th>
+                    <th>Role / Position</th>
+                    <th>Company & Location</th>
+                    <th>Period</th>
                     <th>Skills / Tags</th>
-                    <th>Acciones</th>
+                    <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -330,8 +357,8 @@ import { Project, BlogPost, SiteMetrics, AboutInfo, ContactMessage, Skill, Timel
                     </td>
                     <td>
                       <div class="action-btns">
-                        <button class="btn-icon edit" (click)="openEditTimelineModal(item, i)" title="Editar">✏️</button>
-                        <button class="btn-icon delete" (click)="deleteTimeline(i)" title="Eliminar">🗑️</button>
+                        <button class="btn-icon edit" (click)="openEditTimelineModal(item, i)" title="Edit">✏️</button>
+                        <button class="btn-icon delete" (click)="deleteTimeline(i)" title="Delete">🗑️</button>
                       </div>
                     </td>
                   </tr>
@@ -344,22 +371,22 @@ import { Project, BlogPost, SiteMetrics, AboutInfo, ContactMessage, Skill, Timel
           <div class="admin-sub-card">
             <div class="sub-card-head">
               <div>
-                <h3 class="sub-card-title">🎓 Educación & Certificaciones ({{ certItems.length }})</h3>
-                <p class="section-desc">Gestiona tus títulos académicos y certificaciones profesionales.</p>
+                <h3 class="sub-card-title">🎓 Education & Certifications ({{ certItems.length }})</h3>
+                <p class="section-desc">Manage your academic degrees and professional certifications.</p>
               </div>
-              <button class="btn btn-sm btn-primary" (click)="openAddCertModal()">+ Añadir Título / Certificación</button>
+              <button class="btn btn-sm btn-primary" (click)="openAddCertModal()">+ Add Degree / Certification</button>
             </div>
 
             <div class="table-responsive">
               <table class="admin-table">
                 <thead>
                   <tr>
-                    <th>Ícono / Logo</th>
-                    <th>Nombre del Título</th>
-                    <th>Institución / Emisor</th>
-                    <th>Periodo / Año</th>
-                    <th>Estado / Nivel</th>
-                    <th>Acciones</th>
+                    <th>Icon / Logo</th>
+                    <th>Degree / Certification Name</th>
+                    <th>Institution / Issuer</th>
+                    <th>Period / Year</th>
+                    <th>Status / Level</th>
+                    <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -371,8 +398,8 @@ import { Project, BlogPost, SiteMetrics, AboutInfo, ContactMessage, Skill, Timel
                     <td><span class="badge" [class.badge-active]="c.level === 'In-Progress'">{{ c.level }}</span></td>
                     <td>
                       <div class="action-btns">
-                        <button class="btn-icon edit" (click)="openEditCertModal(c, i)" title="Editar">✏️</button>
-                        <button class="btn-icon delete" (click)="deleteCert(i)" title="Eliminar">🗑️</button>
+                        <button class="btn-icon edit" (click)="openEditCertModal(c, i)" title="Edit">✏️</button>
+                        <button class="btn-icon delete" (click)="deleteCert(i)" title="Delete">🗑️</button>
                       </div>
                     </td>
                   </tr>
@@ -389,8 +416,8 @@ import { Project, BlogPost, SiteMetrics, AboutInfo, ContactMessage, Skill, Timel
         <section *ngIf="activeTab() === 'metrics'" class="tab-content">
           <div class="content-bar">
             <div>
-              <h2>Métricas Calculadas Automáticamente</h2>
-              <p class="section-desc">Las estadísticas se generan en tiempo real a partir del estado de tu portafolio y GitHub.</p>
+              <h2>Automatically Calculated Metrics</h2>
+              <p class="section-desc">Statistics are generated in real-time based on your portfolio content and GitHub.</p>
             </div>
           </div>
 
@@ -398,51 +425,51 @@ import { Project, BlogPost, SiteMetrics, AboutInfo, ContactMessage, Skill, Timel
             <div class="metric-card-kpi">
               <div class="kpi-icon">🚀</div>
               <div class="kpi-num">{{ projects().length }}</div>
-              <div class="kpi-label">Proyectos Registrados</div>
-              <div class="kpi-sub">Calculado de la pestaña Proyectos</div>
+              <div class="kpi-label">Projects Registered</div>
+              <div class="kpi-sub">Calculated from Projects tab</div>
             </div>
 
             <div class="metric-card-kpi">
               <div class="kpi-icon">📝</div>
               <div class="kpi-num">{{ blogs().length }}</div>
-              <div class="kpi-label">Artículos Publicados</div>
-              <div class="kpi-sub">Calculado de la pestaña Blog</div>
+              <div class="kpi-label">Articles Published</div>
+              <div class="kpi-sub">Calculated from Blog tab</div>
             </div>
 
             <div class="metric-card-kpi">
               <div class="kpi-icon">🛠️</div>
               <div class="kpi-num">{{ skills().length }}</div>
-              <div class="kpi-label">Tecnologías Dominadas</div>
-              <div class="kpi-sub">Calculado de tus habilidades</div>
+              <div class="kpi-label">Mastered Technologies</div>
+              <div class="kpi-sub">Calculated from your skills</div>
             </div>
 
             <div class="metric-card-kpi">
               <div class="kpi-icon">🎓</div>
               <div class="kpi-num">{{ certItems.length }}</div>
-              <div class="kpi-label">Certificaciones y Grados</div>
-              <div class="kpi-sub">Calculado de tus certificaciones</div>
+              <div class="kpi-label">Certifications & Degrees</div>
+              <div class="kpi-sub">Calculated from your certifications</div>
             </div>
 
             <div class="metric-card-kpi">
               <div class="kpi-icon">💬</div>
               <div class="kpi-num">{{ contactMsgs().length }}</div>
-              <div class="kpi-label">Mensajes Recibidos</div>
-              <div class="kpi-sub">Formularios de contacto directos</div>
+              <div class="kpi-label">Messages Received</div>
+              <div class="kpi-sub">Direct contact forms</div>
             </div>
 
             <div class="metric-card-kpi">
               <div class="kpi-icon">🐙</div>
               <div class="kpi-num">14+</div>
-              <div class="kpi-label">Repositorios GitHub</div>
-              <div class="kpi-sub">Sincronizado vía GitHub API</div>
+              <div class="kpi-label">GitHub Repositories</div>
+              <div class="kpi-sub">Synced via GitHub API</div>
             </div>
           </div>
 
           <div class="metric-info-banner">
             <div class="info-icon">⚡</div>
             <div>
-              <h4>Sincronización Automática Activa</h4>
-              <p>No necesitas ingresar valores manualmente. Cada vez que agregas un proyecto, artículo, habilidad o certificación, las métricas del Home y About Me se actualizan automáticamente en vivo.</p>
+              <h4>Active Automatic Synchronization</h4>
+              <p>No manual entry required. Whenever you add a project, article, skill, or certification, the metrics on Home and About Me update automatically in live preview.</p>
             </div>
           </div>
         </section>
@@ -453,8 +480,8 @@ import { Project, BlogPost, SiteMetrics, AboutInfo, ContactMessage, Skill, Timel
         <section *ngIf="activeTab() === 'contact'" class="tab-content">
           <div class="content-bar">
             <div>
-              <h2>Bandeja de Contacto ({{ contactMsgs().length }})</h2>
-              <p class="section-desc">Todos los mensajes enviados desde el formulario web se muestran aquí inmediatamente.</p>
+              <h2>Contact Inbox ({{ contactMsgs().length }})</h2>
+              <p class="section-desc">All messages submitted via the web contact form are displayed here immediately.</p>
             </div>
           </div>
 
@@ -462,11 +489,11 @@ import { Project, BlogPost, SiteMetrics, AboutInfo, ContactMessage, Skill, Timel
             <table class="admin-table" *ngIf="contactMsgs().length > 0">
               <thead>
                 <tr>
-                  <th>Remitente</th>
-                  <th>Correo Electrónico</th>
-                  <th>Asunto</th>
-                  <th>Mensaje</th>
-                  <th>Acciones</th>
+                  <th>Sender</th>
+                  <th>Email Address</th>
+                  <th>Subject</th>
+                  <th>Message</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -476,11 +503,11 @@ import { Project, BlogPost, SiteMetrics, AboutInfo, ContactMessage, Skill, Timel
                   <td>{{ msg.subject }}</td>
                   <td>
                     <button class="btn-text-expand" (click)="openMsgPopup(msg)">
-                      {{ msg.message | slice:0:70 }}... <span class="expand-hint">ver completo</span>
+                      {{ msg.message | slice:0:70 }}... <span class="expand-hint">view full</span>
                     </button>
                   </td>
                   <td>
-                    <button class="btn-icon delete" (click)="deleteContactMsg(i)" title="Eliminar mensaje">🗑️</button>
+                    <button class="btn-icon delete" (click)="deleteContactMsg(i)" title="Delete message">🗑️</button>
                   </td>
                 </tr>
               </tbody>
@@ -488,8 +515,182 @@ import { Project, BlogPost, SiteMetrics, AboutInfo, ContactMessage, Skill, Timel
 
             <div class="no-data" *ngIf="contactMsgs().length === 0">
               <div style="font-size: 3rem; margin-bottom: 1rem;">📭</div>
-              <p>No hay mensajes en la bandeja de contacto.</p>
+              <p>No messages in the contact inbox.</p>
             </div>
+          </div>
+        </section>
+
+        <!-- ═══════════════════════════════════════════════
+             6. CONTACT CHANNELS TAB
+        ═══════════════════════════════════════════════ -->
+        <section *ngIf="activeTab() === 'contactlinks'" class="tab-content">
+          <div class="content-bar">
+            <div>
+              <h2>🔗 Contact Channels</h2>
+              <p class="section-desc">Manage all channels: email, LinkedIn, GitHub, WhatsApp, Location, etc. Any change reflects across the entire site immediately.</p>
+            </div>
+            <button class="btn btn-primary" (click)="openAddLinkModal()">+ Add Channel</button>
+          </div>
+
+          <!-- Quick Email Update Banner -->
+          <div class="quick-email-banner">
+            <div class="quick-email-info">
+              <span class="q-email-icon">✉️</span>
+              <div>
+                <strong>Global Email Update</strong>
+                <p>Changing the email here automatically updates About, Footer, Contact Modal, and all contact cards.</p>
+              </div>
+            </div>
+            <div class="quick-email-action">
+              <input type="email" class="form-input" [(ngModel)]="aboutForm.email" name="quickemail" placeholder="yourname@gmail.com" />
+              <button class="btn btn-primary" (click)="updateEmailEverywhere()">💾 Update Global Email</button>
+            </div>
+          </div>
+
+          <div class="links-grid">
+            <div *ngFor="let link of contactLinks()" class="link-card">
+              <div class="link-card-icon">
+                <span *ngIf="link.icon === 'email'">✉️</span>
+                <span *ngIf="link.icon === 'linkedin'">💼</span>
+                <span *ngIf="link.icon === 'github'">🐙</span>
+                <span *ngIf="link.icon === 'whatsapp'">📱</span>
+                <span *ngIf="link.icon === 'location'">📍</span>
+                <span *ngIf="link.icon !== 'email' && link.icon !== 'linkedin' && link.icon !== 'github' && link.icon !== 'whatsapp' && link.icon !== 'location'">🔗</span>
+              </div>
+              <div class="link-card-info">
+                <div class="link-card-title">{{ link.title }}<span class="badge badge-primary" *ngIf="link.isPrimary">Primary</span></div>
+                <div class="link-card-sub">{{ link.subtitle }}</div>
+                <a [href]="link.url" target="_blank" class="link-card-url">{{ link.url | slice:0:50 }}...</a>
+              </div>
+              <div class="link-card-actions">
+                <button class="btn-icon edit" (click)="openEditLinkModal(link)" title="Edit">✏️</button>
+                <button class="btn-icon delete" (click)="deleteLink(link.id)" title="Delete">🗑️</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ═══════════════════════════════════════════════
+             7. TECHNICAL DOCS TAB
+        ═══════════════════════════════════════════════ -->
+        <section *ngIf="activeTab() === 'docs'" class="tab-content">
+          <div class="content-bar">
+            <div>
+              <h2>📚 Technical Documentation</h2>
+              <p class="section-desc">Manage technical documents displayed in the portfolio Contact section.</p>
+            </div>
+            <button class="btn btn-primary" (click)="openAddDocModal()">+ Add Document</button>
+          </div>
+
+          <div class="table-responsive">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>Icon</th>
+                  <th>Title &amp; Summary</th>
+                  <th>Category</th>
+                  <th>Tags</th>
+                  <th>Read Time</th>
+                  <th>Updated</th>
+                  <th>Featured</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let doc of technicalDocs()">
+                  <td class="icon-cell">{{ doc.icon || '📄' }}</td>
+                  <td>
+                    <strong>{{ doc.title }}</strong>
+                    <div class="table-sub">{{ doc.summary | slice:0:80 }}...</div>
+                  </td>
+                  <td><span class="badge badge-cat">{{ doc.category }}</span></td>
+                  <td>
+                    <div class="tag-mini-list">
+                      <span *ngFor="let tag of (doc.tags || []).slice(0,3)" class="tag-mini">#{{ tag }}</span>
+                    </div>
+                  </td>
+                  <td>{{ doc.estimatedReadTime }}</td>
+                  <td>{{ doc.lastUpdated }}</td>
+                  <td>{{ doc.isFeatured ? '⭐ Yes' : '—' }}</td>
+                  <td>
+                    <div class="action-btns">
+                      <button class="btn-icon edit" (click)="openEditDocModal(doc)" title="Edit">✏️</button>
+                      <button class="btn-icon delete" (click)="deleteDoc(doc.id)" title="Delete">🗑️</button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- ═══════════════════════════════════════════════
+             8. CLOUD SYNC TAB
+        ═══════════════════════════════════════════════ -->
+        <section *ngIf="activeTab() === 'cloudsync'" class="tab-content">
+          <div class="content-bar">
+            <div>
+              <h2>☁️ Multi-Device Synchronization</h2>
+              <p class="section-desc">All changes made here are saved to the cloud and synchronized across all devices in real-time.</p>
+            </div>
+          </div>
+
+          <!-- Cloud Status Cards -->
+          <div class="cloud-status-grid">
+            <div class="cloud-stat-card" [ngClass]="'status-' + cloudSync.syncStatus()">
+              <div class="cloud-stat-icon">
+                <span *ngIf="cloudSync.syncStatus() === 'synced'">☁️</span>
+                <span *ngIf="cloudSync.syncStatus() === 'syncing'">🔄</span>
+                <span *ngIf="cloudSync.syncStatus() === 'offline'">📴</span>
+                <span *ngIf="cloudSync.syncStatus() === 'error'">⚠️</span>
+              </div>
+              <div class="cloud-stat-info">
+                <div class="cloud-stat-label">Cloud Status</div>
+                <div class="cloud-stat-value">
+                  <span *ngIf="cloudSync.syncStatus() === 'synced'">✅ Synced</span>
+                  <span *ngIf="cloudSync.syncStatus() === 'syncing'">🔄 Syncing data...</span>
+                  <span *ngIf="cloudSync.syncStatus() === 'offline'">📴 Offline — Saved Locally</span>
+                  <span *ngIf="cloudSync.syncStatus() === 'error'">⚠️ Connection Error</span>
+                </div>
+                <div class="cloud-stat-sub" *ngIf="cloudSync.lastSyncTime()">
+                  Last sync: {{ cloudSync.lastSyncTime() | date:'dd/MM/yyyy HH:mm:ss' }}
+                </div>
+              </div>
+            </div>
+
+            <div class="cloud-stat-card">
+              <div class="cloud-stat-icon">🔁</div>
+              <div class="cloud-stat-info">
+                <div class="cloud-stat-label">Auto Sync</div>
+                <div class="cloud-stat-value">{{ cloudSync.isAutoSyncEnabled() ? 'Enabled ✅' : 'Disabled ⏸️' }}</div>
+                <div class="cloud-stat-sub">Synchronizes automatically on every change</div>
+              </div>
+              <button class="btn btn-sm btn-outline" (click)="toggleAutoSync()">
+                {{ cloudSync.isAutoSyncEnabled() ? 'Disable' : 'Enable' }}
+              </button>
+            </div>
+          </div>
+
+          <!-- Cloud Endpoint Config -->
+          <div class="cloud-config-card">
+            <h3>⚙️ Cloud Endpoint Configuration</h3>
+            <p class="cloud-config-desc">Enter the URL for your Firebase Realtime Database or any REST service compatible with PUT/GET.</p>
+            <div class="cloud-input-row">
+              <input type="url" class="form-input cloud-url-input" [(ngModel)]="cloudEndpointInput" name="cloudurl" placeholder="https://your-project-default-rtdb.firebaseio.com/portfolio_data.json" />
+              <button class="btn btn-primary" (click)="saveCloudEndpoint()">💾 Save &amp; Sync</button>
+              <button class="btn btn-outline" (click)="resetCloudEndpoint()">🔄 Restore Default</button>
+            </div>
+            <div class="cloud-url-active">
+              <span>Active endpoint:</span> <code>{{ cloudSync.cloudEndpoint() }}</code>
+            </div>
+          </div>
+
+          <!-- Force Sync Section -->
+          <div class="cloud-force-section">
+            <button class="btn btn-primary btn-large" (click)="forceSyncNow()">
+              🔄 Force Sync Now
+            </button>
+            <p>Forces download of the latest data from the cloud and updates all devices.</p>
           </div>
         </section>
 
@@ -500,54 +701,58 @@ import { Project, BlogPost, SiteMetrics, AboutInfo, ContactMessage, Skill, Timel
       ═══════════════════════════════════════════════ -->
       <div class="modal-backdrop" *ngIf="showProjectModal" (click)="showProjectModal = false">
         <div class="modal-card" (click)="$event.stopPropagation()">
-          <h3>{{ editingProject ? 'Editar Proyecto' : 'Añadir Nuevo Proyecto' }}</h3>
+          <h3>{{ editingProject ? 'Edit Project' : 'Add New Project' }}</h3>
           <form (ngSubmit)="saveProject()">
             <div class="form-group">
-              <label>Título del Proyecto *</label>
-              <input type="text" class="form-input" [(ngModel)]="projectForm.title" name="title" required placeholder="Ej: Sistema Core Bancario" />
+              <label>Project Title *</label>
+              <input type="text" class="form-input" [(ngModel)]="projectForm.title" name="title" required placeholder="e.g., Core Banking System" />
             </div>
             <div class="form-group">
-              <label>Descripción Corta (Tarjeta) *</label>
-              <textarea class="form-input" [(ngModel)]="projectForm.description" name="description" rows="2" required placeholder="Resumen conciso..."></textarea>
+              <label>Short Description (Card) *</label>
+              <textarea class="form-input" [(ngModel)]="projectForm.description" name="description" rows="2" required placeholder="Concise summary..."></textarea>
             </div>
             <div class="form-group">
-              <label>Descripción Detallada (Modal de Detalle)</label>
-              <textarea class="form-input" [(ngModel)]="projectForm.longDescription" name="longDescription" rows="4" placeholder="Explicación exhaustiva del stack, arquitectura, etc..."></textarea>
+              <label>Detailed Description (Detail Modal)</label>
+              <textarea class="form-input" [(ngModel)]="projectForm.longDescription" name="longDescription" rows="4" placeholder="Comprehensive explanation of stack, architecture, metrics, etc..."></textarea>
             </div>
             <div class="form-row">
               <div class="form-group">
-                <label>Categoría</label>
+                <label>Category</label>
                 <select class="form-input form-select" [(ngModel)]="projectForm.category" name="category">
-                  <option value="frontend">Frontend</option>
+                  <option value="fullstack">Full Stack</option>
                   <option value="backend">Backend</option>
-                  <option value="ai">IA & Machine Learning</option>
+                  <option value="frontend">Frontend</option>
+                  <option value="data">Data Engineering & Analytics</option>
+                  <option value="ai">AI & Machine Learning</option>
+                  <option value="mobile">Mobile Apps</option>
                   <option value="devops">Cloud & DevOps</option>
+                  <option value="others">Others</option>
                 </select>
               </div>
               <div class="form-group">
-                <label>Año</label>
+                <label>Year</label>
                 <input type="number" class="form-input" [(ngModel)]="projectForm.year" name="year" placeholder="2026" />
               </div>
             </div>
             <div class="form-group">
-              <label>Tecnologías (Separadas por comas)</label>
+              <label>Technologies (Comma-separated)</label>
               <input type="text" class="form-input" [(ngModel)]="techsString" name="techs" placeholder="Angular, C#, .NET Core, SQL Server, Docker" />
             </div>
 
             <!-- Photos Carousel Upload (Up to 3 images) -->
             <div class="form-group">
-              <label>📸 Fotos del Carrusel (Hasta 3 imágenes)</label>
+              <label>📸 Carousel Photos (Up to 3 images)</label>
               <div class="carousel-uploader-box">
                 <div class="thumbnails-preview-row">
                   <div *ngFor="let img of projectImages; let idx = index" class="thumb-preview-item">
-                    <img [src]="img" [alt]="'Foto ' + (idx + 1)" />
-                    <button type="button" class="btn-remove-thumb" (click)="removeProjectImage(idx)" title="Eliminar foto">✕</button>
-                    <span class="thumb-badge">Foto {{ idx + 1 }}</span>
+                    <img [src]="img" [alt]="'Photo ' + (idx + 1)" />
+                    <button type="button" class="btn-remove-thumb" (click)="removeProjectImage(idx)" title="Delete photo">✕</button>
+                    <span class="thumb-badge">Photo {{ idx + 1 }}</span>
                   </div>
                 </div>
                 <div class="upload-actions-row" *ngIf="projectImages.length < 3">
                   <input type="file" id="proj-img-input" accept="image/*" (change)="onProjectImageUpload($event)" class="file-hidden-input" />
-                  <label for="proj-img-input" class="btn btn-sm btn-outline">+ Subir Foto ({{ projectImages.length }}/3)</label>
+                  <label for="proj-img-input" class="btn btn-sm btn-outline">+ Upload Photo ({{ projectImages.length }}/3)</label>
                 </div>
               </div>
             </div>
@@ -563,11 +768,11 @@ import { Project, BlogPost, SiteMetrics, AboutInfo, ContactMessage, Skill, Timel
               </div>
             </div>
             <div class="form-group checkbox-group">
-              <label><input type="checkbox" [(ngModel)]="projectForm.featured" name="featured" /> Marcar como Proyecto Destacado ⭐</label>
+              <label><input type="checkbox" [(ngModel)]="projectForm.featured" name="featured" /> Mark as Featured Project ⭐</label>
             </div>
             <div class="modal-footer">
-              <button type="button" class="btn btn-outline" (click)="showProjectModal = false">Cancelar</button>
-              <button type="submit" class="btn btn-primary">Guardar Proyecto</button>
+              <button type="button" class="btn btn-outline" (click)="showProjectModal = false">Cancel</button>
+              <button type="submit" class="btn btn-primary">Save Project</button>
             </div>
           </form>
         </div>
@@ -578,68 +783,71 @@ import { Project, BlogPost, SiteMetrics, AboutInfo, ContactMessage, Skill, Timel
       ═══════════════════════════════════════════════ -->
       <div class="modal-backdrop" *ngIf="showBlogModal" (click)="showBlogModal = false">
         <div class="modal-card" (click)="$event.stopPropagation()">
-          <h3>{{ editingBlog ? 'Editar Artículo' : 'Añadir Nuevo Artículo' }}</h3>
+          <h3>{{ editingBlog ? 'Edit Article' : 'Add New Article' }}</h3>
           <form (ngSubmit)="saveBlog()">
             <div class="form-group">
-              <label>Título del Artículo *</label>
-              <input type="text" class="form-input" [(ngModel)]="blogForm.title" name="btitle" required placeholder="Título del artículo..." />
+              <label>Article Title *</label>
+              <input type="text" class="form-input" [(ngModel)]="blogForm.title" name="btitle" required placeholder="Article title..." />
             </div>
 
             <!-- Cover Image Upload -->
             <div class="form-group">
-              <label>🖼️ Imagen de Portada del Artículo</label>
+              <label>🖼️ Article Cover Image</label>
               <div class="cover-uploader-box">
                 <div *ngIf="blogCoverImage" class="cover-preview-item">
-                  <img [src]="blogCoverImage" alt="Portada" />
-                  <button type="button" class="btn-remove-thumb" (click)="blogCoverImage = ''" title="Eliminar portada">✕</button>
+                  <img [src]="blogCoverImage" alt="Cover" />
+                  <button type="button" class="btn-remove-thumb" (click)="blogCoverImage = ''" title="Delete cover">✕</button>
                 </div>
                 <div class="upload-btn-wrap">
                   <input type="file" id="blog-cover-input" accept="image/*" (change)="onBlogCoverUpload($event)" class="file-hidden-input" />
-                  <label for="blog-cover-input" class="btn btn-sm btn-outline">📁 {{ blogCoverImage ? 'Cambiar Portada' : 'Subir Imagen de Portada' }}</label>
+                  <label for="blog-cover-input" class="btn btn-sm btn-outline">📁 {{ blogCoverImage ? 'Change Cover' : 'Upload Cover Image' }}</label>
                 </div>
               </div>
             </div>
 
             <div class="form-group">
-              <label>Resumen / Excerpt *</label>
+              <label>Summary / Excerpt *</label>
               <textarea class="form-input" [(ngModel)]="blogForm.excerpt" name="bexcerpt" rows="2" required></textarea>
             </div>
             <div class="form-group">
-              <label>Contenido Completo (Párrafos o texto)</label>
+              <label>Full Content (Paragraphs or text)</label>
               <textarea class="form-input" [(ngModel)]="blogForm.content" name="bcontent" rows="6"></textarea>
             </div>
             <div class="form-row">
               <div class="form-group">
-                <label>Categoría</label>
+                <label>Category</label>
                 <select class="form-input form-select" [(ngModel)]="blogForm.category" name="bcategory">
-                  <option value="ai">IA & Machine Learning</option>
+                  <option value="ai">AI & Machine Learning</option>
+                  <option value="data">Data Engineering & Analytics</option>
                   <option value="frontend">Frontend</option>
                   <option value="backend">Backend</option>
                   <option value="devops">DevOps & Cloud</option>
-                  <option value="product">Producto & Gestión</option>
+                  <option value="architecture">Software Architecture</option>
+                  <option value="career">Career & Leadership</option>
+                  <option value="others">Others</option>
                 </select>
               </div>
               <div class="form-group">
-                <label>Tiempo de Lectura (min)</label>
+                <label>Read Time (min)</label>
                 <input type="number" class="form-input" [(ngModel)]="blogForm.readTime" name="bread" />
               </div>
             </div>
             <div class="form-row">
               <div class="form-group">
-                <label>Fecha de Publicación</label>
-                <input type="text" class="form-input" [(ngModel)]="blogForm.date" name="bdate" placeholder="Septiembre 2026" />
+                <label>Publication Date</label>
+                <input type="text" class="form-input" [(ngModel)]="blogForm.date" name="bdate" placeholder="September 2026" />
               </div>
               <div class="form-group">
-                <label>Tags (Separados por comas)</label>
+                <label>Tags (Comma-separated)</label>
                 <input type="text" class="form-input" [(ngModel)]="tagsString" name="btags" placeholder="Angular, AI, Python" />
               </div>
             </div>
             <div class="form-group checkbox-group">
-              <label><input type="checkbox" [(ngModel)]="blogForm.featured" name="bfeatured" /> Artículo Destacado ⭐</label>
+              <label><input type="checkbox" [(ngModel)]="blogForm.featured" name="bfeatured" /> Featured Article ⭐</label>
             </div>
             <div class="modal-footer">
-              <button type="button" class="btn btn-outline" (click)="showBlogModal = false">Cancelar</button>
-              <button type="submit" class="btn btn-primary">Guardar Artículo</button>
+              <button type="button" class="btn btn-outline" (click)="showBlogModal = false">Cancel</button>
+              <button type="submit" class="btn btn-primary">Save Article</button>
             </div>
           </form>
         </div>
@@ -650,14 +858,14 @@ import { Project, BlogPost, SiteMetrics, AboutInfo, ContactMessage, Skill, Timel
       ═══════════════════════════════════════════════ -->
       <div class="modal-backdrop" *ngIf="showSkillModal" (click)="showSkillModal = false">
         <div class="modal-card modal-sm" (click)="$event.stopPropagation()">
-          <h3>{{ editingSkillIndex !== null ? 'Editar Tecnología' : 'Añadir Tecnología' }}</h3>
+          <h3>{{ editingSkillIndex !== null ? 'Edit Technology' : 'Add Technology' }}</h3>
           <form (ngSubmit)="saveSkill()">
             <div class="form-group">
-              <label>Nombre de la Tecnología *</label>
-              <input type="text" class="form-input" [(ngModel)]="skillForm.name" name="sname" required placeholder="Ej: Angular, FastAPI, Docker" />
+              <label>Technology Name *</label>
+              <input type="text" class="form-input" [(ngModel)]="skillForm.name" name="sname" required placeholder="e.g., Angular, FastAPI, Docker" />
             </div>
             <div class="form-group">
-              <label>Categoría *</label>
+              <label>Category *</label>
               <select class="form-input form-select" [(ngModel)]="skillForm.category" name="scat" required>
                 <option value="frontend">Frontend</option>
                 <option value="backend">Backend</option>
@@ -668,16 +876,16 @@ import { Project, BlogPost, SiteMetrics, AboutInfo, ContactMessage, Skill, Timel
               </select>
             </div>
             <div class="form-group">
-              <label>Nivel de Dominio ({{ skillForm.level }}%)</label>
+              <label>Proficiency Level ({{ skillForm.level }}%)</label>
               <input type="range" min="10" max="100" step="5" class="form-range" [(ngModel)]="skillForm.level" name="slevel" />
             </div>
             <div class="form-group">
-              <label>Descripción / Conceptos clave</label>
-              <input type="text" class="form-input" [(ngModel)]="skillForm.description" name="sdesc" placeholder="RxJS, Signals, microfrontends..." />
+              <label>Description / Key Concepts</label>
+              <input type="text" class="form-input" [(ngModel)]="skillForm.description" name="sdesc" placeholder="RxJS, Signals, Microfrontends..." />
             </div>
             <div class="modal-footer">
-              <button type="button" class="btn btn-outline" (click)="showSkillModal = false">Cancelar</button>
-              <button type="submit" class="btn btn-primary">Guardar Tecnología</button>
+              <button type="button" class="btn btn-outline" (click)="showSkillModal = false">Cancel</button>
+              <button type="submit" class="btn btn-primary">Save Technology</button>
             </div>
           </form>
         </div>
@@ -688,54 +896,54 @@ import { Project, BlogPost, SiteMetrics, AboutInfo, ContactMessage, Skill, Timel
       ═══════════════════════════════════════════════ -->
       <div class="modal-backdrop" *ngIf="showTimelineModal" (click)="showTimelineModal = false">
         <div class="modal-card" (click)="$event.stopPropagation()">
-          <h3>{{ editingTimelineIndex !== null ? 'Editar Experiencia' : 'Añadir Experiencia' }}</h3>
+          <h3>{{ editingTimelineIndex !== null ? 'Edit Experience' : 'Add Experience' }}</h3>
           <form (ngSubmit)="saveTimeline()">
             <div class="form-row">
               <div class="form-group flex-2">
-                <label>Cargo / Rol *</label>
-                <input type="text" class="form-input" [(ngModel)]="timelineForm.role" name="trole" required placeholder="Ej: Investigation Analyst I" />
+                <label>Role / Position *</label>
+                <input type="text" class="form-input" [(ngModel)]="timelineForm.role" name="trole" required placeholder="e.g., Investigation Analyst I" />
               </div>
               <div class="form-group flex-1">
-                <label>Año *</label>
+                <label>Year *</label>
                 <input type="text" class="form-input" [(ngModel)]="timelineForm.year" name="tyear" required placeholder="2024" />
               </div>
             </div>
             <div class="form-row">
               <div class="form-group">
-                <label>Empresa / Organización *</label>
+                <label>Company / Organization *</label>
                 <input type="text" class="form-input" [(ngModel)]="timelineForm.company" name="tcompany" required placeholder="BAC, Freelance..." />
               </div>
               <div class="form-group">
-                <label>Periodo (Meses y Años) *</label>
+                <label>Period (Months & Years) *</label>
                 <input type="text" class="form-input" [(ngModel)]="timelineForm.period" name="tperiod" required placeholder="Oct 2024 - Present" />
               </div>
             </div>
 
             <!-- Logo Upload -->
             <div class="form-group">
-              <label>Logo de la Empresa (Subir imagen o usar URL)</label>
+              <label>Company Logo (Upload image or use URL)</label>
               <div class="logo-uploader-row">
                 <div *ngIf="timelineForm.companyLogo" class="logo-preview-box">
                   <img [src]="timelineForm.companyLogo" alt="Logo preview" />
                   <button type="button" class="btn-remove-thumb" (click)="timelineForm.companyLogo = ''">✕</button>
                 </div>
                 <input type="file" id="time-logo-input" accept="image/*" (change)="onTimelineLogoUpload($event)" class="file-hidden-input" />
-                <label for="time-logo-input" class="btn btn-sm btn-outline">📁 Subir Logo</label>
-                <input type="text" class="form-input" style="flex:1" [(ngModel)]="timelineForm.companyLogo" name="tlogo" placeholder="O pega URL de imagen..." />
+                <label for="time-logo-input" class="btn btn-sm btn-outline">📁 Upload Logo</label>
+                <input type="text" class="form-input" style="flex:1" [(ngModel)]="timelineForm.companyLogo" name="tlogo" placeholder="Or paste image URL..." />
               </div>
             </div>
 
             <div class="form-group">
-              <label>Descripción de Responsabilidades y Logros *</label>
+              <label>Responsibilities & Achievements Description *</label>
               <textarea class="form-input" [(ngModel)]="timelineForm.description" name="tdesc" rows="3" required></textarea>
             </div>
             <div class="form-group">
-              <label>Skills / Tags (Separados por comas)</label>
+              <label>Skills / Tags (Comma-separated)</label>
               <input type="text" class="form-input" [(ngModel)]="timelineTagsString" name="ttags" placeholder="Data Analysis, Power BI, Python" />
             </div>
             <div class="modal-footer">
-              <button type="button" class="btn btn-outline" (click)="showTimelineModal = false">Cancelar</button>
-              <button type="submit" class="btn btn-primary">Guardar Experiencia</button>
+              <button type="button" class="btn btn-outline" (click)="showTimelineModal = false">Cancel</button>
+              <button type="submit" class="btn btn-primary">Save Experience</button>
             </div>
           </form>
         </div>
@@ -746,37 +954,37 @@ import { Project, BlogPost, SiteMetrics, AboutInfo, ContactMessage, Skill, Timel
       ═══════════════════════════════════════════════ -->
       <div class="modal-backdrop" *ngIf="showCertModal" (click)="showCertModal = false">
         <div class="modal-card modal-sm" (click)="$event.stopPropagation()">
-          <h3>{{ editingCertIndex !== null ? 'Editar Certificación' : 'Añadir Certificación' }}</h3>
+          <h3>{{ editingCertIndex !== null ? 'Edit Certification' : 'Add Certification' }}</h3>
           <form (ngSubmit)="saveCert()">
             <div class="form-group">
-              <label>Nombre del Título / Certificación *</label>
-              <input type="text" class="form-input" [(ngModel)]="certForm.name" name="cname" required placeholder="Ej: Professional MBA with an emphasis in Management" />
+              <label>Degree / Certification Name *</label>
+              <input type="text" class="form-input" [(ngModel)]="certForm.name" name="cname" required placeholder="e.g., Professional MBA with an emphasis in Management" />
             </div>
             <div class="form-group">
-              <label>Institución / Universidad Emisora *</label>
+              <label>Issuing Institution / University *</label>
               <input type="text" class="form-input" [(ngModel)]="certForm.issuer" name="cissuer" required placeholder="Universidad de Costa Rica (UCR)" />
             </div>
             <div class="form-row">
               <div class="form-group">
-                <label>Periodo / Año</label>
+                <label>Period / Year</label>
                 <input type="text" class="form-input" [(ngModel)]="certForm.year" name="cyear" placeholder="Sep 2025 - Present" />
               </div>
               <div class="form-group">
-                <label>Estado / Nivel</label>
+                <label>Status / Level</label>
                 <select class="form-input form-select" [(ngModel)]="certForm.level" name="clevel">
-                  <option value="Completed">Completado</option>
-                  <option value="In-Progress">En Curso</option>
-                  <option value="Specialization">Especialización</option>
+                  <option value="Completed">Completed</option>
+                  <option value="In-Progress">In-Progress</option>
+                  <option value="Specialization">Specialization</option>
                 </select>
               </div>
             </div>
             <div class="form-group">
-              <label>Ícono (Emoji)</label>
+              <label>Icon (Emoji)</label>
               <input type="text" class="form-input" [(ngModel)]="certForm.icon" name="cicon" placeholder="🎓, 📊, 💻" />
             </div>
             <div class="modal-footer">
-              <button type="button" class="btn btn-outline" (click)="showCertModal = false">Cancelar</button>
-              <button type="submit" class="btn btn-primary">Guardar Certificación</button>
+              <button type="button" class="btn btn-outline" (click)="showCertModal = false">Cancel</button>
+              <button type="submit" class="btn btn-primary">Save Certification</button>
             </div>
           </form>
         </div>
@@ -796,13 +1004,126 @@ import { Project, BlogPost, SiteMetrics, AboutInfo, ContactMessage, Skill, Timel
             </div>
           </div>
           <div class="msg-popup-subject">
-            <span class="label">Asunto:</span> {{ selectedMsg.subject }}
+            <span class="label">Subject:</span> {{ selectedMsg.subject }}
           </div>
           <div class="msg-popup-body">{{ selectedMsg.message }}</div>
           <div class="msg-popup-footer">
-            <a [href]="'mailto:' + selectedMsg.email + '?subject=Re: ' + selectedMsg.subject" class="btn btn-primary">✉️ Responder por Correo</a>
-            <button class="btn btn-outline" (click)="selectedMsg = null">Cerrar</button>
+            <a [href]="'mailto:' + selectedMsg.email + '?subject=Re: ' + selectedMsg.subject" class="btn btn-primary">✉️ Reply via Email</a>
+            <button class="btn btn-outline" (click)="selectedMsg = null">Close</button>
           </div>
+        </div>
+      </div>
+
+
+
+      <!-- ═══════════════════════════════════════════════
+           DOC MODAL (Add/Edit Technical Docs)
+      ═══════════════════════════════════════════════ -->
+      <div class="modal-backdrop" *ngIf="showDocModal" (click)="showDocModal = false">
+        <div class="modal-card modal-lg" (click)="$event.stopPropagation()">
+          <h3>{{ editingDoc ? 'Edit Technical Document' : 'Create New Technical Document' }}</h3>
+          <form (ngSubmit)="saveDoc()">
+            <div class="form-row">
+              <div class="form-group flex-2">
+                <label>Document Title *</label>
+                <input type="text" class="form-input" [(ngModel)]="docForm.title" name="dtitle" required placeholder="e.g., Complete Architecture Guide for the Portfolio" />
+              </div>
+              <div class="form-group flex-1">
+                <label>Icon (Emoji)</label>
+                <input type="text" class="form-input" [(ngModel)]="docForm.icon" name="dicon" placeholder="📘" />
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Category</label>
+                <input type="text" class="form-input" [(ngModel)]="docForm.category" name="dcat" placeholder="Architecture, CI/CD, Frontend..." />
+              </div>
+              <div class="form-group">
+                <label>Estimated Read Time</label>
+                <input type="text" class="form-input" [(ngModel)]="docForm.estimatedReadTime" name="dread" placeholder="12 min" />
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Author</label>
+              <input type="text" class="form-input" [(ngModel)]="docForm.author" name="dauthor" placeholder="Steven Piedra Villalta" />
+            </div>
+            <div class="form-group">
+              <label>Summary / Brief Description *</label>
+              <textarea class="form-input form-textarea" [(ngModel)]="docForm.summary" name="dsummary" rows="2" required placeholder="Comprehensive technical procedure..."></textarea>
+            </div>
+            <div class="form-group">
+              <label>Tags (Comma-separated)</label>
+              <input type="text" class="form-input" [(ngModel)]="docTagsString" name="dtags" placeholder="Angular, Signals, Cloud Sync, Glassmorphism" />
+            </div>
+            <div class="form-group">
+              <label>Full Content (Supports Markdown)</label>
+              <textarea class="form-input form-textarea doc-content-area" [(ngModel)]="docForm.content" name="dcontent" rows="12" placeholder="## Section 1&#10;&#10;Detailed description here...&#10;&#10;### Subsection&#10;- Point 1&#10;- Point 2"></textarea>
+              <p class="input-help">Supports headers (## ###), lists (- ), code (\`\`\`), bold (**text**).</p>
+            </div>
+            <div class="form-group checkbox-group">
+              <label><input type="checkbox" [(ngModel)]="docForm.isFeatured" name="dfeatured" /> Featured Document ⭐ (Appears first in the Contact section)</label>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-outline" (click)="showDocModal = false">Cancel</button>
+              <button type="submit" class="btn btn-primary">💾 Save Document</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- ═══════════════════════════════════════════════
+           CONTACT LINK MODAL (Add/Edit)
+      ═══════════════════════════════════════════════ -->
+      <div class="modal-backdrop" *ngIf="showLinkModal" (click)="showLinkModal = false">
+        <div class="modal-card modal-sm" (click)="$event.stopPropagation()">
+          <h3>{{ editingLink ? 'Edit Contact Channel' : 'Add Contact Channel' }}</h3>
+          <form (ngSubmit)="saveLink()">
+            <div class="form-group">
+              <label>Channel Name *</label>
+              <input type="text" class="form-input" [(ngModel)]="linkForm.title" name="ltitle" required placeholder="Email, LinkedIn, WhatsApp..." />
+            </div>
+            <div class="form-group">
+              <label>Subtitle / Handle</label>
+              <input type="text" class="form-input" [(ngModel)]="linkForm.subtitle" name="lsub" placeholder="yourname@gmail.com, @username..." />
+            </div>
+            <div class="form-group">
+              <label>URL / Link *</label>
+              <input type="text" class="form-input" [(ngModel)]="linkForm.url" name="lurl" required placeholder="mailto:..., https://linkedin.com/..." />
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Icon</label>
+                <select class="form-input form-select" [(ngModel)]="linkForm.icon" name="licon">
+                  <option value="email">✉️ Email</option>
+                  <option value="linkedin">💼 LinkedIn</option>
+                  <option value="github">🐙 GitHub</option>
+                  <option value="whatsapp">📱 WhatsApp</option>
+                  <option value="location">📍 Location</option>
+                  <option value="custom">🔗 Custom Link</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Type</label>
+                <select class="form-input form-select" [(ngModel)]="linkForm.type" name="ltype">
+                  <option value="email">Email (mailto:)</option>
+                  <option value="url">URL (https://)</option>
+                  <option value="tel">Phone (tel:)</option>
+                  <option value="custom">Custom</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Display Order</label>
+              <input type="number" class="form-input" [(ngModel)]="linkForm.order" name="lorder" min="1" />
+            </div>
+            <div class="form-group checkbox-group">
+              <label><input type="checkbox" [(ngModel)]="linkForm.isPrimary" name="lprimary" /> Primary Channel (Appears first)</label>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-outline" (click)="showLinkModal = false">Cancel</button>
+              <button type="submit" class="btn btn-primary">💾 Save Channel</button>
+            </div>
+          </form>
         </div>
       </div>
 
@@ -880,6 +1201,168 @@ import { Project, BlogPost, SiteMetrics, AboutInfo, ContactMessage, Skill, Timel
       border-radius: 12px;
       border: 1px solid rgba(255, 255, 255, 0.06);
     }
+
+    /* Sync Status Bar */
+    .sync-status-bar {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-top: 0.75rem;
+      padding: 0.5rem 0.85rem;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 8px;
+      font-size: 0.82rem;
+      color: #94A3B8;
+      width: fit-content;
+    }
+
+    .sync-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #64748B;
+      flex-shrink: 0;
+      &.synced { background: #22c55e; }
+      &.syncing { background: #f59e0b; }
+      &.offline { background: #94a3b8; }
+      &.error { background: #ef4444; }
+    }
+
+    .btn-sync-now {
+      background: rgba(59, 130, 246, 0.15);
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      color: #60A5FA;
+      padding: 0.25rem 0.65rem;
+      border-radius: 6px;
+      font-size: 0.78rem;
+      cursor: pointer;
+      &:hover { background: rgba(59, 130, 246, 0.3); }
+    }
+
+    /* Cloud Sync Tab Styles */
+    .cloud-status-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.25rem;
+      margin-bottom: 2rem;
+    }
+
+    .cloud-stat-card {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 14px;
+      padding: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+
+      &.status-synced { border-color: rgba(34, 197, 94, 0.3); }
+      &.status-syncing { border-color: rgba(245, 158, 11, 0.3); }
+      &.status-offline { border-color: rgba(100, 116, 139, 0.3); }
+      &.status-error { border-color: rgba(239, 68, 68, 0.3); }
+    }
+
+    .cloud-stat-icon { font-size: 2rem; flex-shrink: 0; }
+    .cloud-stat-info { flex: 1; }
+    .cloud-stat-label { font-size: 0.78rem; color: #64748B; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.25rem; }
+    .cloud-stat-value { font-size: 1rem; font-weight: 600; color: #F8FAFC; }
+    .cloud-stat-sub { font-size: 0.8rem; color: #64748B; margin-top: 0.25rem; }
+
+    .cloud-config-card {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 14px;
+      padding: 1.75rem;
+      margin-bottom: 2rem;
+
+      h3 { margin: 0 0 0.5rem 0; font-size: 1.1rem; color: #F8FAFC; }
+    }
+
+    .cloud-config-desc { color: #94A3B8; font-size: 0.9rem; margin-bottom: 1rem; }
+
+    .cloud-input-row {
+      display: flex;
+      gap: 0.75rem;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-bottom: 1rem;
+    }
+
+    .cloud-url-input { flex: 1; min-width: 280px; }
+
+    .cloud-url-active {
+      font-size: 0.82rem;
+      color: #64748B;
+      code { color: #60A5FA; font-size: 0.82rem; word-break: break-all; }
+    }
+
+    .cloud-force-section {
+      text-align: center;
+      padding: 2rem;
+      border: 1px dashed rgba(59, 130, 246, 0.3);
+      border-radius: 14px;
+      p { color: #94A3B8; margin-top: 0.75rem; font-size: 0.9rem; }
+    }
+
+    .btn-large { padding: 1rem 2.5rem; font-size: 1.1rem; }
+
+    /* Contact Links Cards */
+    .links-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 1.25rem;
+    }
+
+    .link-card {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 14px;
+      padding: 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      transition: border-color 0.2s;
+      &:hover { border-color: rgba(59, 130, 246, 0.35); }
+    }
+
+    .link-card-icon { font-size: 1.75rem; flex-shrink: 0; }
+    .link-card-info { flex: 1; min-width: 0; }
+    .link-card-title { font-weight: 600; color: #F8FAFC; font-size: 0.95rem; display: flex; align-items: center; gap: 0.5rem; }
+    .link-card-sub { font-size: 0.82rem; color: #94A3B8; margin: 0.15rem 0; }
+    .link-card-url { font-size: 0.78rem; color: #60A5FA; text-decoration: none; word-break: break-all; &:hover { text-decoration: underline; } }
+    .link-card-actions { display: flex; gap: 0.4rem; }
+
+    /* Quick Email Banner */
+    .quick-email-banner {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1.25rem;
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(99, 102, 241, 0.08) 100%);
+      border: 1px solid rgba(99, 102, 241, 0.25);
+      border-radius: 14px;
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 1.75rem;
+
+      p { margin: 0.25rem 0 0 0; font-size: 0.85rem; color: #94A3B8; }
+      strong { color: #C7D2FE; }
+    }
+
+    .quick-email-info { display: flex; align-items: flex-start; gap: 0.75rem; }
+    .q-email-icon { font-size: 1.75rem; flex-shrink: 0; }
+    .quick-email-action { display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap; min-width: 300px; }
+
+    /* Doc & general badges */
+    .badge-primary { background: rgba(99, 102, 241, 0.2); color: #A5B4FC; border: 1px solid rgba(99, 102, 241, 0.3); padding: 0.1rem 0.5rem; border-radius: 4px; font-size: 0.72rem; }
+    .tag-mini-list { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+    .tag-mini { background: rgba(59, 130, 246, 0.12); color: #93C5FD; padding: 0.1rem 0.4rem; border-radius: 4px; font-size: 0.75rem; }
+    .icon-cell { font-size: 1.5rem; text-align: center; }
+    .doc-content-area { font-family: 'JetBrains Mono', monospace; font-size: 0.88rem; line-height: 1.5; }
+    .input-help { font-size: 0.8rem; color: #64748B; margin-top: 0.3rem; }
+    .modal-lg { max-width: 800px !important; }
+
 
     .tab-btn {
       padding: 0.65rem 1.25rem;
@@ -1556,17 +2039,34 @@ import { Project, BlogPost, SiteMetrics, AboutInfo, ContactMessage, Skill, Timel
 })
 export class AdminComponent implements OnInit {
   private portfolioService = inject(PortfolioService);
+  readonly cloudSync = inject(CloudSyncService);
   private authService = inject(AuthService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
 
-  activeTab = signal<'projects' | 'blogs' | 'about' | 'metrics' | 'contact'>('projects');
+  activeTab = signal<'projects' | 'blogs' | 'about' | 'metrics' | 'contact' | 'contactlinks' | 'docs' | 'cloudsync'>('projects');
 
   projects = this.portfolioService.projectsSignal;
   blogs = this.portfolioService.blogPostsSignal;
   skills = this.portfolioService.skillsSignal;
   contactMsgs = this.portfolioService.contactMsgsSignal;
   aboutInfo = this.portfolioService.aboutInfoSignal;
+  technicalDocs = this.portfolioService.technicalDocsSignal;
+  contactLinks = this.portfolioService.contactLinksSignal;
+
+  // Cloud sync config
+  cloudEndpointInput = '';
+
+  // TechnicalDoc modal
+  showDocModal = false;
+  editingDoc: TechnicalDoc | null = null;
+  docForm: Partial<TechnicalDoc> = {};
+  docTagsString = '';
+
+  // ContactLink modal
+  showLinkModal = false;
+  editingLink: ContactLinkItem | null = null;
+  linkForm: Partial<ContactLinkItem> = {};
 
   aboutForm: AboutInfo = { ...this.portfolioService.getAboutInfo() };
   selectedMsg: ContactMessage | null = null;
@@ -1618,13 +2118,15 @@ export class AdminComponent implements OnInit {
     this.route.queryParams.subscribe(params => {
       if (params['tab']) {
         const t = params['tab'];
-        if (t === 'projects' || t === 'blogs' || t === 'metrics' || t === 'about' || t === 'contact') {
-          this.activeTab.set(t);
+        if (t === 'projects' || t === 'blogs' || t === 'metrics' || t === 'about' || t === 'contact' || t === 'contactlinks' || t === 'docs' || t === 'cloudsync') {
+          this.activeTab.set(t as any);
         } else if (t === 'blog') {
           this.activeTab.set('blogs');
         }
       }
     });
+    // Initialize cloud endpoint input
+    this.cloudEndpointInput = this.cloudSync.cloudEndpoint();
 
     // Refresh about form with current state
     this.aboutForm = { ...this.portfolioService.getAboutInfo() };
@@ -1686,7 +2188,7 @@ export class AdminComponent implements OnInit {
     const finalImages = this.projectImages.length > 0 ? this.projectImages : ['assets/projects/ecommerce.jpg'];
 
     const projData: Omit<Project, 'id'> = {
-      title: this.projectForm.title || 'Nuevo Proyecto',
+      title: this.projectForm.title || 'New Project',
       description: this.projectForm.description || '',
       longDescription: this.projectForm.longDescription || '',
       technologies: techs,
@@ -1710,7 +2212,7 @@ export class AdminComponent implements OnInit {
   }
 
   deleteProject(id: number) {
-    if (confirm('¿Está seguro de eliminar este proyecto y sus fotos?')) {
+    if (confirm('Are you sure you want to delete this project and its photos?')) {
       this.portfolioService.deleteProject(id);
     }
   }
@@ -1725,7 +2227,7 @@ export class AdminComponent implements OnInit {
       category: 'ai',
       icon: '🤖',
       featured: false,
-      date: 'Septiembre 2026',
+      date: 'September 2026',
       readTime: 5,
       gradient: 'linear-gradient(135deg, #2a1a5c, #7c3aed)'
     };
@@ -1759,13 +2261,13 @@ export class AdminComponent implements OnInit {
   saveBlog() {
     const tags = this.tagsString.split(',').map(t => t.trim()).filter(t => t.length > 0);
     const blogData: Omit<BlogPost, 'id'> = {
-      title: this.blogForm.title || 'Nuevo Artículo',
+      title: this.blogForm.title || 'New Article',
       excerpt: this.blogForm.excerpt || '',
       content: this.blogForm.content || '',
       category: this.blogForm.category || 'ai',
       tags: tags,
       readTime: this.blogForm.readTime || 5,
-      date: this.blogForm.date || 'Septiembre 2026',
+      date: this.blogForm.date || 'September 2026',
       icon: this.blogForm.icon || '📝',
       coverImage: this.blogCoverImage || undefined,
       featured: !!this.blogForm.featured,
@@ -1783,7 +2285,7 @@ export class AdminComponent implements OnInit {
   }
 
   deleteBlog(id: number) {
-    if (confirm('¿Está seguro de eliminar este artículo?')) {
+    if (confirm('Are you sure you want to delete this article?')) {
       this.portfolioService.deleteBlogPost(id);
     }
   }
@@ -1815,7 +2317,7 @@ export class AdminComponent implements OnInit {
           this.aboutForm.cvUrl = e.target.result as string;
           this.aboutForm.cvFileName = fileName;
           this.saveAboutInfo(false);
-          alert(`¡CV "${fileName}" cargado con éxito!`);
+          alert(`CV "${fileName}" uploaded successfully!`);
         }
       };
       reader.readAsDataURL(file);
@@ -1827,7 +2329,7 @@ export class AdminComponent implements OnInit {
     this.aboutForm.completedProjectsCount = this.projects().length;
     this.portfolioService.updateAboutInfo(this.aboutForm);
     if (notify) {
-      alert('¡Información de About Me guardada con éxito!');
+      alert('About Me information saved successfully!');
     }
   }
 
@@ -1855,7 +2357,7 @@ export class AdminComponent implements OnInit {
   }
 
   deleteSkill(index: number) {
-    if (confirm('¿Eliminar esta tecnología?')) {
+    if (confirm('Delete this technology?')) {
       this.portfolioService.deleteSkill(index);
     }
   }
@@ -1915,7 +2417,7 @@ export class AdminComponent implements OnInit {
   }
 
   deleteTimeline(index: number) {
-    if (confirm('¿Eliminar esta experiencia?')) {
+    if (confirm('Delete this experience?')) {
       const current = [...(this.aboutForm.timeline || [])];
       current.splice(index, 1);
       this.aboutForm.timeline = current;
@@ -1950,7 +2452,7 @@ export class AdminComponent implements OnInit {
   }
 
   deleteCert(index: number) {
-    if (confirm('¿Eliminar esta certificación?')) {
+    if (confirm('Delete this certification?')) {
       const current = [...(this.aboutForm.certifications || [])];
       current.splice(index, 1);
       this.aboutForm.certifications = current;
@@ -1964,9 +2466,135 @@ export class AdminComponent implements OnInit {
   }
 
   deleteContactMsg(index: number) {
-    if (confirm('¿Eliminar este mensaje de contacto?')) {
+    if (confirm('Delete this contact message?')) {
       this.portfolioService.deleteContactMessage(index);
       this.selectedMsg = null;
+    }
+  }
+
+  // --- Cloud Sync ---
+  forceSyncNow() {
+    this.portfolioService.syncFromCloud();
+  }
+
+  saveCloudEndpoint() {
+    if (this.cloudEndpointInput.trim()) {
+      this.cloudSync.setCloudEndpoint(this.cloudEndpointInput.trim());
+      this.forceSyncNow();
+    }
+  }
+
+  resetCloudEndpoint() {
+    this.cloudSync.resetCloudEndpoint();
+    this.cloudEndpointInput = this.cloudSync.cloudEndpoint();
+  }
+
+  toggleAutoSync() {
+    this.cloudSync.isAutoSyncEnabled.update(v => !v);
+  }
+
+  // --- Technical Docs CRUD ---
+  openAddDocModal() {
+    this.editingDoc = null;
+    this.docForm = {
+      title: '',
+      category: 'Architecture',
+      summary: '',
+      content: '',
+      author: this.portfolioService.getAboutInfo().fullName || 'Steven Piedra',
+      icon: '📘',
+      estimatedReadTime: '10 min',
+      isFeatured: false
+    };
+    this.docTagsString = 'Angular, TypeScript';
+    this.showDocModal = true;
+  }
+
+  openEditDocModal(doc: TechnicalDoc) {
+    this.editingDoc = doc;
+    this.docForm = { ...doc };
+    this.docTagsString = (doc.tags || []).join(', ');
+    this.showDocModal = true;
+  }
+
+  saveDoc() {
+    if (!this.docForm.title?.trim()) return;
+    const tags = this.docTagsString.split(',').map(t => t.trim()).filter(t => t.length > 0);
+    const docData = {
+      title: this.docForm.title || '',
+      category: this.docForm.category || 'General',
+      summary: this.docForm.summary || '',
+      content: this.docForm.content || '',
+      author: this.docForm.author || '',
+      icon: this.docForm.icon || '📘',
+      estimatedReadTime: this.docForm.estimatedReadTime || '10 min',
+      isFeatured: !!this.docForm.isFeatured,
+      tags
+    };
+    if (this.editingDoc) {
+      this.portfolioService.updateTechnicalDoc({ ...docData, id: this.editingDoc.id, lastUpdated: this.editingDoc.lastUpdated });
+    } else {
+      this.portfolioService.addTechnicalDoc(docData);
+    }
+    this.showDocModal = false;
+  }
+
+  deleteDoc(id: number) {
+    if (confirm('Delete this technical document?')) {
+      this.portfolioService.deleteTechnicalDoc(id);
+    }
+  }
+
+  // --- Contact Links CRUD ---
+  openAddLinkModal() {
+    this.editingLink = null;
+    this.linkForm = {
+      title: '',
+      subtitle: '',
+      url: '',
+      icon: 'email',
+      type: 'url',
+      isPrimary: false,
+      order: this.contactLinks().length + 1
+    };
+    this.showLinkModal = true;
+  }
+
+  openEditLinkModal(link: ContactLinkItem) {
+    this.editingLink = link;
+    this.linkForm = { ...link };
+    this.showLinkModal = true;
+  }
+
+  saveLink() {
+    if (!this.linkForm.title?.trim() || !this.linkForm.url?.trim()) return;
+    const linkData: Omit<ContactLinkItem, 'id'> = {
+      title: this.linkForm.title || '',
+      subtitle: this.linkForm.subtitle || '',
+      url: this.linkForm.url || '',
+      icon: this.linkForm.icon || 'link',
+      type: this.linkForm.type || 'url',
+      isPrimary: !!this.linkForm.isPrimary,
+      order: this.linkForm.order || 1
+    };
+    if (this.editingLink) {
+      this.portfolioService.updateContactLink({ ...linkData, id: this.editingLink.id });
+    } else {
+      this.portfolioService.addContactLink(linkData);
+    }
+    this.showLinkModal = false;
+  }
+
+  deleteLink(id: string) {
+    if (confirm('Delete this contact channel?')) {
+      this.portfolioService.deleteContactLink(id);
+    }
+  }
+
+  updateEmailEverywhere() {
+    const email = this.aboutForm.email?.trim();
+    if (email) {
+      this.portfolioService.updatePrimaryEmail(email);
     }
   }
 }

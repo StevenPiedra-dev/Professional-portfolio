@@ -11,7 +11,7 @@ import { AuthService } from '../../core/services/auth.service';
   template: `
     <div class="modal-backdrop" (click)="closeModal()" role="dialog" aria-modal="true">
       <div class="login-card" (click)="$event.stopPropagation()">
-        <button class="close-btn" (click)="closeModal()" aria-label="Cerrar">
+        <button class="close-btn" (click)="closeModal()" aria-label="Close">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <line x1="18" y1="6" x2="6" y2="18"></line>
             <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -20,13 +20,13 @@ import { AuthService } from '../../core/services/auth.service';
 
         <div class="login-header">
           <div class="admin-badge">🔒 Secret Admin Portal</div>
-          <h2>Ingreso Administrativo</h2>
-          <p>Ingrese sus credenciales de administrador para gestionar los datos.</p>
+          <h2>Admin Sign In</h2>
+          <p>Enter your administrator credentials to access the management portal.</p>
         </div>
 
         <form (ngSubmit)="onSubmit()" class="login-form">
           <div class="form-group">
-            <label for="admin-user">Usuario</label>
+            <label for="admin-user">Username</label>
             <input
               id="admin-user"
               type="text"
@@ -40,7 +40,7 @@ import { AuthService } from '../../core/services/auth.service';
           </div>
 
           <div class="form-group">
-            <label for="admin-pass">Contraseña</label>
+            <label for="admin-pass">Password</label>
             <div class="input-eye-wrapper">
               <input
                 id="admin-pass"
@@ -52,7 +52,7 @@ import { AuthService } from '../../core/services/auth.service';
                 required
                 autocomplete="current-password"
               />
-              <button type="button" class="eye-btn" (click)="showPassword = !showPassword" [title]="showPassword ? 'Ocultar' : 'Mostrar'">
+              <button type="button" class="eye-btn" (click)="showPassword = !showPassword" [title]="showPassword ? 'Hide' : 'Show'">
                 <svg *ngIf="!showPassword" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                 <svg *ngIf="showPassword" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
               </button>
@@ -64,7 +64,7 @@ import { AuthService } from '../../core/services/auth.service';
           </div>
 
           <button type="submit" class="submit-btn">
-            Iniciar Sesión
+            Sign In
           </button>
         </form>
       </div>
@@ -255,7 +255,7 @@ export class AdminLoginModalComponent {
       this.closeModal();
       this.router.navigate(['/admin']);
     } else {
-      this.errorMessage = 'Credenciales inválidas. Verifique usuario y contraseña.';
+      this.errorMessage = 'Invalid credentials. Please verify your username and password.';
     }
   }
 }

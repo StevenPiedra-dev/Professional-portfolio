@@ -1,16 +1,20 @@
-import { Injectable, signal } from '@angular/core';
-import { Project, BlogPost, SiteMetrics, Skill, SocialLink, AboutInfo, ContactMessage } from '../models/portfolio.models';
+import { Injectable, inject, signal } from '@angular/core';
+import { Project, BlogPost, SiteMetrics, Skill, SocialLink, AboutInfo, ContactMessage, TechnicalDoc, ContactLinkItem, PortfolioData } from '../models/portfolio.models';
+import { CloudSyncService } from './cloud-sync.service';
 
 @Injectable({ providedIn: 'root' })
 export class PortfolioService {
+  private cloudSync = inject(CloudSyncService);
 
-  private readonly PROJECTS_KEY = 'portfolio_projects_v4';
-  private readonly BLOGS_KEY = 'portfolio_blogs_v4';
-  private readonly METRICS_KEY = 'portfolio_metrics_v4';
-  private readonly ABOUT_KEY = 'portfolio_about_v4';
-  private readonly SKILLS_KEY = 'portfolio_skills_v4';
-  private readonly CONTACT_MSGS_KEY = 'portfolio_contact_msgs_v4';
-  private readonly USER_VOTES_KEY = 'portfolio_user_votes_v4';
+  private readonly PROJECTS_KEY = 'portfolio_projects_v5';
+  private readonly BLOGS_KEY = 'portfolio_blogs_v5';
+  private readonly METRICS_KEY = 'portfolio_metrics_v5';
+  private readonly ABOUT_KEY = 'portfolio_about_v5';
+  private readonly SKILLS_KEY = 'portfolio_skills_v5';
+  private readonly CONTACT_MSGS_KEY = 'portfolio_contact_msgs_v5';
+  private readonly USER_VOTES_KEY = 'portfolio_user_votes_v5';
+  private readonly DOCS_KEY = 'portfolio_technical_docs_v5';
+  private readonly CONTACT_LINKS_KEY = 'portfolio_contact_links_v5';
 
   private initialProjects: Project[] = [
     {
@@ -64,7 +68,7 @@ export class PortfolioService {
       githubUrl: 'https://github.com/StevenPiedra-dev',
       featured: true,
       stars: 15,
-      category: 'frontend',
+      category: 'data',
       year: 2024
     },
     {
@@ -90,31 +94,31 @@ export class PortfolioService {
   private initialBlogPosts: BlogPost[] = [
     {
       id: 1,
-      title: 'Construyendo una API con FastAPI y RAG: De cero a producción',
-      excerpt: 'Una guía completa para crear una API inteligente que combina FastAPI con Retrieval-Augmented Generation usando LangChain y embeddings de OpenAI para respuestas contextuales precisas.',
-      content: `En este artículo profundizamos en cómo construir una arquitectura RAG (Retrieval-Augmented Generation) de alto rendimiento en producción.
+      title: 'Building a Production-Ready RAG API with FastAPI & OpenAI: From Zero to Cloud',
+      excerpt: 'A comprehensive engineering guide on architecting an enterprise RAG system with FastAPI, LangChain, vector databases, and OpenAI embeddings for low-latency contextual generation.',
+      content: `In this deep-dive article, we explore how to architect and deploy a high-performance Retrieval-Augmented Generation (RAG) system in production environments.
 
-### 1. ¿Por qué RAG?
-Los modelos LLM tradicionales sufren de alucinaciones y falta de conocimiento sobre información privada o en tiempo real. RAG combina la potencia de búsqueda en bases de datos vectoriales con la capacidad de generación de lenguaje.
+### 1. Why RAG?
+Traditional Large Language Models suffer from hallucination and lack real-time access to private enterprise repositories. RAG bridges this gap by marrying low-latency vector search with generative intelligence.
 
-### 2. Stack Tecnológico
+### 2. The Core Stack
 - **Backend Framework:** FastAPI (Python 3.11)
-- **Vector DB:** Qdrant / PGVector
-- **Embeddings:** OpenAI text-embedding-3-small
-- **Orquestador:** LangChain / LlamaIndex
+- **Vector Database:** Qdrant / PGVector with cosine similarity indexing
+- **Embeddings Model:** OpenAI text-embedding-3-small
+- **Orchestration:** LangChain & LlamaIndex
 
-### 3. Implementación de Embeddings
-Extraemos trozos (chunks) de 500 tokens con un solapamiento de 50 tokens usando RecursiveCharacterTextSplitter. Guardamos los vectores junto con su metadata (ID de documento, página, fecha).
+### 3. Chunking & Ingestion Strategy
+We ingest documents into 500-token chunks with a 50-token rolling overlap using RecursiveCharacterTextSplitter. Each vector is stored alongside contextual metadata (document ID, tenant key, timestamp).
 
-### 4. Búsqueda Híbrida y Re-Ranking
-Para mejorar la precisión del contexto recuperado, implementamos recolección híbrida (BM25 + Búsqueda Vectorial por Cosine Similarity) seguida de un paso de Re-Ranking con Cohere Rerank.
+### 4. Hybrid Search & Cross-Encoder Re-Ranking
+To maximize recall and precision, our architecture executes hybrid retrieval (BM25 keyword matching + Dense Vector Search), followed by a Cohere Rerank cross-encoder pass before sending prompts to the LLM.
 
-### 5. Despliegue en Producción
-Servimos la API usando Uvicorn detrás de Nginx con Docker Compose, garantizando tiempos de respuesta promedio menores a 800ms por prompt.`,
+### 5. Production Serving
+The API is containerized with Docker, served via Uvicorn behind Nginx, and achieves sub-800ms average response latency under concurrent load.`,
       category: 'ai',
       tags: ['FastAPI', 'RAG', 'LangChain', 'OpenAI', 'Python'],
       readTime: 12,
-      date: 'Julio 2025',
+      date: 'July 2025',
       icon: '🤖',
       featured: true,
       gradient: 'linear-gradient(135deg, #2a1a5c, #7c3aed)',
@@ -122,24 +126,24 @@ Servimos la API usando Uvicorn detrás de Nginx con Docker Compose, garantizando
     },
     {
       id: 2,
-      title: 'Angular Signals: El futuro de la reactividad en Angular 17+',
-      excerpt: 'Explorando el nuevo sistema de reactividad de Angular con Signals. Comparativa con RxJS, casos de uso prácticos y migración de código existente.',
-      content: `Angular 17+ ha introducido Signals, cambiando radicalmente la forma en que gestionamos el estado y la detección de cambios en nuestras aplicaciones web.
+      title: 'Angular Signals: The Evolution of Fine-Grained Reactivity in Modern Web Apps',
+      excerpt: 'Exploring the reactivity model of Angular 17+ Signals. In-depth comparison with RxJS observables, practical architectural patterns, and real-world performance gains.',
+      content: `Angular 17+ has introduced Signals, revolutionizing state management and change detection across modern web applications.
 
-### ¿Qué son los Signals?
-Un Signal es un contenedor reactivo que notifica automáticamente a sus consumidores cuando su valor cambia. A diferencia de RxJS observables, los Signals son síncronos y no requieren desuscripciones manuales ni suscripciones con pipe async.
+### What are Signals?
+A Signal is a reactive value wrapper that notifies consumers synchronously when its state transitions. Unlike asynchronous RxJS streams, Signals require no explicit teardown, subscriptions, or async pipes.
 
-### Ventajas Clave
-1. **Fine-grained Change Detection:** Angular recalcula únicamente los nodos del DOM que dependen directamente del Signal modificado.
-2. **Sin mem-leaks por suscripción:** No más \`takeUntilDestroyed()\` ni suscripciones olvidadas.
-3. **Interoperabilidad perfecta:** Métodos como \`toSignal()\` y \`toObservable()\` permiten integrar RxJS fácilmente.
+### Key Architectural Advantages
+1. **Fine-grained Change Detection:** Angular computes and repaints only the precise DOM nodes tied to the updated Signal, bypassing unnecessary sub-tree checks.
+2. **Elimination of Subscription Memory Leaks:** Say goodbye to complex lifecycle handling and forgotten unsubscriptions.
+3. **Seamless Interoperability:** Tools like \`toSignal()\` and \`toObservable()\` provide bidirectional communication with existing RxJS streams.
 
-### Conclusión
-Signals no reemplazan a RxJS en eventos asíncronos complejos, pero simplifican drásticamente el estado local de componentes en Angular moderno.`,
+### Conclusion
+Signals do not replace RxJS for complex asynchronous coordination, but they establish a vastly superior standard for component-level UI reactivity.`,
       category: 'frontend',
       tags: ['Angular', 'Signals', 'RxJS', 'TypeScript'],
       readTime: 8,
-      date: 'Junio 2025',
+      date: 'June 2025',
       icon: '⚡',
       featured: false,
       gradient: 'linear-gradient(135deg, #1a3a5c, #3B82F6)',
@@ -147,22 +151,22 @@ Signals no reemplazan a RxJS en eventos asíncronos complejos, pero simplifican 
     },
     {
       id: 3,
-      title: 'Microservicios con Docker y .NET Core: Arquitectura práctica',
-      excerpt: 'Diseñando un ecosistema de microservicios resiliente con .NET Core, Docker Compose, API Gateway y patrones de comunicación asíncrona con RabbitMQ.',
-      content: `Los microservicios permiten escalar equipos y sistemas, pero añaden complejidad operativa. En esta entrada exploramos un diseño arquitectónico probado en proyectos bancarios y empresariales.
+      title: 'Resilient Microservices with Docker and .NET Core: Enterprise Architecture',
+      excerpt: 'Designing a fault-tolerant microservices ecosystem using C# .NET Core, Docker Compose, API Gateways, and asynchronous event-driven messaging with RabbitMQ.',
+      content: `Microservices unlock agility and autonomous deployment cadences, but they introduce distributed systems challenges. Here is a battle-tested blueprint proven in enterprise financial environments.
 
-### Componentes de la Arquitectura
-1. **API Gateway (YARP / Ocelot):** Enrutamiento centralizado, autenticación OAuth2/JWT y control de cuotas.
-2. **Services Boundaries:**
-   - Auth & User Service (.NET Core API)
-   - Transactions & Payments Service (C# .NET)
-   - Notification Engine (Node.js)
-3. **Event-Driven Messaging:** RabbitMQ para comunicación eventual entre servicios sin acoplamiento síncrono.
-4. **Resiliencia con Polly:** Patrones de Circuit Breaker, Retry con Backoff Exponencial y Fallbacks.`,
+### Architectural Blueprint
+1. **API Gateway (YARP / Reverse Proxy):** Centralized SSL termination, JWT authorization validation, and rate limiting.
+2. **Domain Service Boundaries:**
+   - Identity & RBAC Service (.NET Core API)
+   - Transactions & Clearing Service (C# .NET)
+   - Event Telemetry & Notification Engine (Node.js)
+3. **Event-Driven Messaging:** RabbitMQ asynchronous pub/sub ensures non-blocking decoupled communication across services.
+4. **Fault Tolerance with Polly:** Circuit Breakers, Exponential Backoff Retries, and Fallback caches to prevent cascading outages.`,
       category: 'backend',
-      tags: ['.NET Core', 'Docker', 'RabbitMQ', 'Microservicios'],
+      tags: ['.NET Core', 'Docker', 'RabbitMQ', 'Microservices'],
       readTime: 15,
-      date: 'Mayo 2025',
+      date: 'May 2025',
       icon: '🔧',
       featured: false,
       gradient: 'linear-gradient(135deg, #1a3a40, #0f766e)',
@@ -170,19 +174,19 @@ Signals no reemplazan a RxJS en eventos asíncronos complejos, pero simplifican 
     },
     {
       id: 4,
-      title: 'CI/CD con GitHub Actions: Automatiza tu pipeline de despliegue',
-      excerpt: 'Construye un pipeline de integración y entrega continua desde cero con GitHub Actions. Tests automáticos, análisis de código y despliegue a Azure.',
-      content: `La automatización de entregas de software es fundamental para mantener alta velocidad sin sacrificar la estabilidad.
+      title: 'Continuous Delivery with GitHub Actions: Automating Build, Test, and Cloud Deploy',
+      excerpt: 'Building an automated CI/CD pipeline from scratch with GitHub Actions. Automated linting, test suites, container builds, and zero-downtime cloud deployments.',
+      content: `Automating software delivery is essential for sustaining rapid innovation while maintaining 99.9% platform availability.
 
-### Fases de nuestro Workflow
-- **Lint & Type Check:** Verificación estática con TypeScript y ESLint.
-- **Unit & Integration Tests:** Ejecución paralela de suites de pruebas Karma/Jest.
-- **Build & Artifact Storage:** Compilación optimizada en producción.
-- **Continuous Deployment:** Despliegue automatizado a Vercel/Azure Web Apps al fusionar cambios a la rama \`main\`.`,
+### The Automated Workflow Pipeline
+- **Static Analysis & Linting:** Strict validation using TypeScript, ESLint, and security scanners.
+- **Automated Testing:** Parallel test runners executing unit, contract, and integration suites.
+- **Optimized Bundle Compilation:** Tree-shaking and production compression artifacts.
+- **Continuous Deployment:** Instant automatic deployments to Vercel and Cloud platforms upon pull request merge to the \`main\` branch.`,
       category: 'devops',
-      tags: ['GitHub Actions', 'CI/CD', 'Azure', 'Docker'],
+      tags: ['GitHub Actions', 'CI/CD', 'Docker', 'Cloud'],
       readTime: 10,
-      date: 'Abril 2025',
+      date: 'April 2025',
       icon: '🚀',
       featured: false,
       gradient: 'linear-gradient(135deg, #3a2a1a, #b45309)',
@@ -190,41 +194,60 @@ Signals no reemplazan a RxJS en eventos asíncronos complejos, pero simplifican 
     },
     {
       id: 5,
-      title: 'Product Management en startups tech: Lecciones reales',
-      excerpt: 'Reflexiones sobre cómo priorizar el backlog, comunicar con stakeholders y tomar decisiones de producto en un entorno startup con recursos limitados.',
-      content: `Ser Product Manager en una startup tecnológica requiere equilibrar la velocidad de entrega con la visión a largo plazo.
+      title: 'Enterprise Data Pipelines & Real-Time Dashboards: Python, SQL & Power BI',
+      excerpt: 'End-to-end strategies for ingesting, transforming, and visualizing large-scale operational data sets with sub-second dashboard query responsiveness.',
+      content: `High-performing data teams bridge raw database tables with executive decision-making through resilient ETL/ELT pipelines.
 
-### Aprendizajes clave:
-1. **Focus en el valor del cliente:** No todas las peticiones deben convertirse en código.
-2. **Priorización basada en impacto:** Frameworks RICE (Reach, Impact, Confidence, Effort) para ordenar épicas.
-3. **Iteraciones cortas:** Lanzamientos semanales y feedback continuo de usuarios reales.`,
-      category: 'product',
-      tags: ['Product Manager', 'Agile', 'Scrum', 'OKRs'],
-      readTime: 7,
-      date: 'Marzo 2025',
-      icon: '🎯',
+### Data Architecture Strategy:
+1. **Automated Extraction:** Python scripts and asynchronous workers collecting structured data from banking and telemetry endpoints.
+2. **Transformation & Cleansing:** Pandas and SQL stored procedures validating data integrity, removing duplicates, and structuring analytical star schemas.
+3. **Executive Visualization:** Interactive Power BI and Tableau dashboards delivering actionable KPIs and automated alert thresholds to leadership.`,
+      category: 'data',
+      tags: ['Data Analysis', 'Python', 'SQL', 'Power BI'],
+      readTime: 9,
+      date: 'March 2025',
+      icon: '📊',
       featured: false,
-      gradient: 'linear-gradient(135deg, #3a1a3a, #be185d)',
-      likes: 28
+      gradient: 'linear-gradient(135deg, #1e3a5f, #0284c7)',
+      likes: 35
     },
     {
       id: 6,
-      title: 'PostgreSQL avanzado: Indexación, JSONB y performance tuning',
-      excerpt: 'Técnicas avanzadas de optimización en PostgreSQL: estrategias de indexación, uso de JSONB para datos semiestructurados y análisis de query plans.',
-      content: `PostgreSQL es uno de los motores RDBMS más potentes y versátiles.
+      title: 'Advanced PostgreSQL: Indexing Strategies, JSONB Storage & Performance Tuning',
+      excerpt: 'Techniques for database optimization in high-traffic enterprise systems: GIN/GiST index structures, query execution plan analysis, and connection pooling.',
+      content: `PostgreSQL is one of the most powerful relational engines when tuned properly for scale.
 
-### Estrategias de Optimización:
-- **Índices GIN y GiST** para acelerar búsquedas en columnas JSONB y geográficas.
-- **EXPLAIN ANALYZE:** Análisis profundo de escaneos de tablas (Seq Scan vs Index Scan).
-- **Ajuste de autovacuum** para evitar la fragmentación de almacenamiento en tablas de alto tráfico.`,
+### Performance Tuning Tactics:
+- **GIN & GiST Indexes:** Dramatically accelerating query lookups over JSONB documents and geospatial fields.
+- **EXPLAIN (ANALYZE, BUFFERS):** Diagnosing bottleneck sequential scans and cache misses.
+- **Autovacuum Optimization:** Preventing storage bloat and lock contention on high-frequency transaction tables.`,
       category: 'backend',
-      tags: ['PostgreSQL', 'SQL', 'Performance', 'Indexación'],
+      tags: ['PostgreSQL', 'SQL', 'Performance', 'Database'],
       readTime: 11,
-      date: 'Febrero 2025',
+      date: 'February 2025',
       icon: '🗄️',
       featured: false,
       gradient: 'linear-gradient(135deg, #1a2a3a, #1e4d6b)',
       likes: 22
+    },
+    {
+      id: 7,
+      title: 'Engineering Leadership & Agile Product Management in Tech Startups',
+      excerpt: 'Lessons learned on sprint backlog prioritization frameworks (RICE/MoSCoW), cross-functional team alignment, and balancing velocity with technical debt.',
+      content: `Serving as a technical Product Manager requires balancing short-term release momentum with long-term software architecture health.
+
+### Key Takeaways:
+1. **Value-First Backlog Management:** Prioritizing features that directly reduce operational friction or drive measurable user impact.
+2. **Objective Prioritization:** Leveraging RICE scoring (Reach, Impact, Confidence, Effort) to eliminate subjective roadmap disputes.
+3. **Rapid Feedback Loops:** Weekly deployment increments paired with direct telemetry analytics to validate hypotheses early.`,
+      category: 'others',
+      tags: ['Product Management', 'Agile', 'Scrum', 'Leadership'],
+      readTime: 7,
+      date: 'January 2025',
+      icon: '🎯',
+      featured: false,
+      gradient: 'linear-gradient(135deg, #3a1a3a, #be185d)',
+      likes: 28
     }
   ];
 
@@ -317,16 +340,164 @@ Signals no reemplazan a RxJS en eventos asíncronos complejos, pero simplifican 
 
   private initialContactMsgs: ContactMessage[] = [
     {
-      name: 'Carlos Rodríguez',
-      email: 'carlos.rodriguez@techbank.com',
-      subject: 'Oportunidad de desarrollo bancario en C# .NET y Angular',
-      message: 'Hola Steven, nos llamó mucho la atención tu experiencia en arquitecturas bancarias core. Quisiéramos agendar una reunión para discutir una posición técnica.'
+      name: 'Michael Davis',
+      email: 'm.davis@fintechpartners.com',
+      subject: 'Core Banking Engineering Opportunity (C# .NET & Angular)',
+      message: 'Hi Steven, we came across your banking core architecture background and were very impressed. We would love to schedule an introductory call to discuss our engineering opening.'
     },
     {
-      name: 'María Fernández',
-      email: 'mfernandez@aisolutions.io',
-      subject: 'Consulta sobre integración RAG y LangChain',
-      message: 'Excelente artículo sobre FastAPI y RAG. Me gustaría colaborar en un proyecto de procesamiento de documentos legales con IA.'
+      name: 'Sarah Chen',
+      email: 'sarah.chen@innovateai.io',
+      subject: 'Inquiry regarding Enterprise RAG & LangChain Architecture',
+      message: 'Great technical article on FastAPI and RAG implementations. We would like to collaborate on an enterprise document retrieval and AI assistant project.'
+    }
+  ];
+
+  private initialContactLinks: ContactLinkItem[] = [
+    {
+      id: 'email-primary',
+      title: 'Primary Email',
+      subtitle: 'steven.piedra02@gmail.com',
+      url: 'mailto:steven.piedra02@gmail.com',
+      icon: 'email',
+      type: 'email',
+      isPrimary: true,
+      order: 1
+    },
+    {
+      id: 'linkedin-main',
+      title: 'LinkedIn',
+      subtitle: 'in/stevenpiedra',
+      url: 'https://www.linkedin.com/in/stevenpiedra/',
+      icon: 'linkedin',
+      type: 'url',
+      isPrimary: true,
+      order: 2
+    },
+    {
+      id: 'github-main',
+      title: 'GitHub',
+      subtitle: 'StevenPiedra-dev',
+      url: 'https://github.com/StevenPiedra-dev',
+      icon: 'github',
+      type: 'url',
+      isPrimary: true,
+      order: 3
+    },
+    {
+      id: 'location-main',
+      title: 'Location',
+      subtitle: 'San José, Costa Rica (Remote / Worldwide)',
+      url: 'https://maps.google.com/?q=San+Jose+Costa+Rica',
+      icon: 'location',
+      type: 'custom',
+      isPrimary: false,
+      order: 4
+    }
+  ];
+
+  private initialTechnicalDocs: TechnicalDoc[] = [
+    {
+      id: 1,
+      title: 'Architecture & Engineering Blueprint: Enterprise Portfolio Platform',
+      category: 'Architecture & System Design',
+      summary: 'Exhaustive engineering specification, Clean Architecture patterns, modern Angular 17+ Signals reactivity, cloud multi-device synchronization engine, and automated CI/CD pipelines.',
+      author: 'Steven Piedra Villalta',
+      lastUpdated: 'March 2026',
+      tags: ['Angular 17+', 'TypeScript', 'Signals', 'Glassmorphism', 'Cloud Sync', 'CI/CD'],
+      icon: '📘',
+      estimatedReadTime: '15 min',
+      isFeatured: true,
+      content: `## 🌟 1. Executive Project Overview
+
+This professional portfolio application was designed and engineered adhering to modern enterprise web standards. It combines an ultra-premium **Glassmorphism design system**, fine-grained reactive state management powered by **Angular 17+ Signals**, and a real-time **Multi-Device Cloud Synchronization Engine**.
+
+---
+
+## 🏛️ 2. Software Architecture & Clean Design Patterns
+
+The repository is structured following **Modular Clean Architecture**:
+
+\`\`\`
+src/
+├── app/
+│   ├── core/                  # Singleton Services, Models & Cloud Engine
+│   │   ├── models/            # Strict TypeScript interfaces & data contracts
+│   │   └── services/          # PortfolioService, CloudSyncService, AuthService, ContactService
+│   ├── features/              # Autonomous Feature Modules
+│   │   ├── home/              # Hero presentation, live telemetry dashboard, and KPI metrics
+│   │   ├── about/             # Professional biography, interactive career timeline, and certs
+│   │   ├── projects/          # Showcase gallery with 3-photo carousel and category filter
+│   │   ├── blog/              # Technical publications with interactive likes and reader modal
+│   │   ├── contacts/          # Dynamic contact channels and this interactive technical documentation
+│   │   └── admin/             # Protected management dashboard with complete CRUD capabilities
+│   └── shared/                # Design system primitives, Navbar, Footer, Modales, and Charts
+\`\`\`
+
+---
+
+## ⚡ 3. Core Technologies & Frameworks
+
+- **Core Framework:** Angular 17.3+ (Standalone Components, Zero Legacy NgModules).
+- **Reactivity Paradigm:** Angular Signals (\`signal()\`, \`computed()\`, \`effect()\`) achieving sub-millisecond change detection with zero memory leaks.
+- **Strict Typing:** TypeScript 5.4+ with complete domain model interfaces.
+- **Styling Architecture:** Modular SCSS leveraging HSL design tokens, dynamic gradients, Glassmorphism (\`backdrop-filter: blur(16px)\`), and GPU-accelerated micro-interactions.
+- **Persistence & Cloud Sync:** Hybrid engine (\`CloudSyncService\`) pairing Firebase Realtime Database REST endpoints with instant \`localStorage\` offline resilience.
+- **Continuous Deployment:** Single-Page Application rewrites with Vercel and automated GitHub Actions verification.
+
+---
+
+## 🛠️ 4. Step-by-Step Engineering Workflow
+
+### Phase 1: Project Initialization & Configuration
+1. Scaffolded workspace with modern Angular CLI:
+   \`\`\`bash
+   ng new Professional-portfolio --standalone --routing --style=scss
+   \`\`\`
+2. Configured \`app.config.ts\` with \`provideHttpClient()\` and hash-location routing for universal static host compatibility.
+
+### Phase 2: Domain Layer & Reactive Core
+- Established strict TypeScript interfaces in \`portfolio.models.ts\`: \`Project\`, \`BlogPost\`, \`AboutInfo\`, \`Skill\`, \`TechnicalDoc\`, \`ContactLinkItem\`, \`SiteMetrics\`.
+- Engineered \`PortfolioService\` as the Single Reactive Source of Truth.
+
+### Phase 3: Multi-Device Cloud Sync Engine
+- Created \`CloudSyncService\` with automatic debouncing (\`500ms\`) to eliminate request congestion.
+- Two-way sync: automatically pulls the latest cloud state on startup and window focus, and pushes updates asynchronously upon any administrative action.
+
+### Phase 4: Production User Experience
+1. **Interactive Dashboard:** Visualizing live commit velocity, GitHub repository heatmaps, and technology competency breakdowns.
+2. **Project Showcase:** 3-photo image carousel, interactive star rating counters, and technology tags.
+3. **Blog Engine:** Categorized technical writing with like metrics and rich modal reading views.
+4. **Unified Contact Hub:** Dynamically propagated contact channels, email dispatch, and architecture specs.
+
+---
+
+## 🚀 5. Build Verification & Deployment
+
+### Production Compilation:
+\`\`\`bash
+npm run build
+\`\`\`
+
+### Vercel Hosting Configuration (\`vercel.json\`):
+\`\`\`json
+{
+  "buildCommand": "npm run vercel-build",
+  "outputDirectory": "dist/portfolio-steven-piedra/browser",
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}
+\`\`\`
+
+---
+
+## 🔒 6. Security & Performance Best Practices
+
+1. **Lightweight Bundle:** Optimized tree-shaking delivering initial page load times under 1 second.
+2. **Protected Management Portal:** Credential-guarded administration interface with session validation.
+3. **Offline Durability:** Transparent graceful fallback to local storage if network connectivity drops.
+4. **Mobile First & Universal Layouts:** Fully responsive scaling across mobile devices, tablets, and 4K desktop screens.`
     }
   ];
 
@@ -337,7 +508,21 @@ Signals no reemplazan a RxJS en eventos asíncronos complejos, pero simplifican 
   aboutInfoSignal = signal<AboutInfo>(this.loadStorage(this.ABOUT_KEY, this.initialAboutInfo));
   skillsSignal = signal<Skill[]>(this.loadStorage(this.SKILLS_KEY, this.initialSkills));
   contactMsgsSignal = signal<ContactMessage[]>(this.loadStorage(this.CONTACT_MSGS_KEY, this.initialContactMsgs));
+  technicalDocsSignal = signal<TechnicalDoc[]>(this.loadStorage(this.DOCS_KEY, this.initialTechnicalDocs));
+  contactLinksSignal = signal<ContactLinkItem[]>(this.loadStorage(this.CONTACT_LINKS_KEY, this.initialContactLinks));
   userVotesSignal = signal<{ projects: number[]; blogs: number[] }>(this.loadStorage(this.USER_VOTES_KEY, { projects: [], blogs: [] }));
+
+  constructor() {
+    // Attempt initial cloud sync on startup
+    this.syncFromCloud();
+
+    // Re-sync on window focus (e.g., when user switches back from another tab or device)
+    if (typeof window !== 'undefined') {
+      window.addEventListener('focus', () => {
+        this.syncFromCloud();
+      });
+    }
+  }
 
   private loadStorage<T>(key: string, fallback: T): T {
     try {
@@ -353,6 +538,67 @@ Signals no reemplazan a RxJS en eventos asíncronos complejos, pero simplifican 
     } catch {}
   }
 
+  /**
+   * Dispatches cloud sync for all data
+   */
+  private syncToCloud(): void {
+    const fullData: PortfolioData = {
+      projects: this.projectsSignal(),
+      blogPosts: this.blogPostsSignal(),
+      metrics: this.metricsSignal(),
+      aboutInfo: this.aboutInfoSignal(),
+      skills: this.skillsSignal(),
+      contactMsgs: this.contactMsgsSignal(),
+      technicalDocs: this.technicalDocsSignal(),
+      contactLinks: this.contactLinksSignal(),
+      userVotes: this.userVotesSignal(),
+      lastSyncedAt: new Date().toISOString()
+    };
+    this.cloudSync.queueSave(fullData);
+  }
+
+  /**
+   * Syncs latest data from cloud into local signals and storage
+   */
+  syncFromCloud(): void {
+    this.cloudSync.fetchFromCloud().subscribe(data => {
+      if (data) {
+        if (data.projects && Array.isArray(data.projects)) {
+          this.projectsSignal.set(data.projects);
+          this.saveStorage(this.PROJECTS_KEY, data.projects);
+        }
+        if (data.blogPosts && Array.isArray(data.blogPosts)) {
+          this.blogPostsSignal.set(data.blogPosts);
+          this.saveStorage(this.BLOGS_KEY, data.blogPosts);
+        }
+        if (data.aboutInfo) {
+          this.aboutInfoSignal.set(data.aboutInfo);
+          this.saveStorage(this.ABOUT_KEY, data.aboutInfo);
+        }
+        if (data.skills && Array.isArray(data.skills)) {
+          this.skillsSignal.set(data.skills);
+          this.saveStorage(this.SKILLS_KEY, data.skills);
+        }
+        if (data.metrics) {
+          this.metricsSignal.set(data.metrics);
+          this.saveStorage(this.METRICS_KEY, data.metrics);
+        }
+        if (data.contactMsgs && Array.isArray(data.contactMsgs)) {
+          this.contactMsgsSignal.set(data.contactMsgs);
+          this.saveStorage(this.CONTACT_MSGS_KEY, data.contactMsgs);
+        }
+        if (data.technicalDocs && Array.isArray(data.technicalDocs) && data.technicalDocs.length > 0) {
+          this.technicalDocsSignal.set(data.technicalDocs);
+          this.saveStorage(this.DOCS_KEY, data.technicalDocs);
+        }
+        if (data.contactLinks && Array.isArray(data.contactLinks) && data.contactLinks.length > 0) {
+          this.contactLinksSignal.set(data.contactLinks);
+          this.saveStorage(this.CONTACT_LINKS_KEY, data.contactLinks);
+        }
+      }
+    });
+  }
+
   // --- Projects Methods ---
   getProjects(): Project[] {
     return this.projectsSignal();
@@ -364,18 +610,21 @@ Signals no reemplazan a RxJS en eventos asíncronos complejos, pero simplifican 
     const updated = [newProj, ...this.projectsSignal()];
     this.projectsSignal.set(updated);
     this.saveStorage(this.PROJECTS_KEY, updated);
+    this.syncToCloud();
   }
 
   updateProject(updatedProject: Project): void {
     const updated = this.projectsSignal().map(p => p.id === updatedProject.id ? updatedProject : p);
     this.projectsSignal.set(updated);
     this.saveStorage(this.PROJECTS_KEY, updated);
+    this.syncToCloud();
   }
 
   deleteProject(id: number): void {
     const updated = this.projectsSignal().filter(p => p.id !== id);
     this.projectsSignal.set(updated);
     this.saveStorage(this.PROJECTS_KEY, updated);
+    this.syncToCloud();
   }
 
   isProjectStarred(id: number): boolean {
@@ -402,6 +651,7 @@ Signals no reemplazan a RxJS en eventos asíncronos complejos, pero simplifican 
     });
     this.projectsSignal.set(updatedProjects);
     this.saveStorage(this.PROJECTS_KEY, updatedProjects);
+    this.syncToCloud();
 
     return !alreadyStarred;
   }
@@ -422,12 +672,14 @@ Signals no reemplazan a RxJS en eventos asíncronos complejos, pero simplifican 
     this.blogPostsSignal.set(updated);
     this.saveStorage(this.BLOGS_KEY, updated);
     this.updateMetrics({ articlesPublished: this.blogPostsSignal().length });
+    this.syncToCloud();
   }
 
   updateBlogPost(updatedPost: BlogPost): void {
     const updated = this.blogPostsSignal().map(b => b.id === updatedPost.id ? updatedPost : b);
     this.blogPostsSignal.set(updated);
     this.saveStorage(this.BLOGS_KEY, updated);
+    this.syncToCloud();
   }
 
   deleteBlogPost(id: number): void {
@@ -435,6 +687,7 @@ Signals no reemplazan a RxJS en eventos asíncronos complejos, pero simplifican 
     this.blogPostsSignal.set(updated);
     this.saveStorage(this.BLOGS_KEY, updated);
     this.updateMetrics({ articlesPublished: updated.length });
+    this.syncToCloud();
   }
 
   isBlogLiked(id: number): boolean {
@@ -460,6 +713,7 @@ Signals no reemplazan a RxJS en eventos asíncronos complejos, pero simplifican 
     });
     this.blogPostsSignal.set(updatedBlogs);
     this.saveStorage(this.BLOGS_KEY, updatedBlogs);
+    this.syncToCloud();
 
     return !alreadyLiked;
   }
@@ -486,6 +740,7 @@ Signals no reemplazan a RxJS en eventos asíncronos complejos, pero simplifican 
     const updated = { ...this.metricsSignal(), ...partial };
     this.metricsSignal.set(updated);
     this.saveStorage(this.METRICS_KEY, updated);
+    this.syncToCloud();
   }
 
   // --- About Me Methods ---
@@ -496,6 +751,12 @@ Signals no reemplazan a RxJS en eventos asíncronos complejos, pero simplifican 
   updateAboutInfo(info: AboutInfo): void {
     this.aboutInfoSignal.set(info);
     this.saveStorage(this.ABOUT_KEY, info);
+
+    // If email was updated, synchronize contact link email
+    if (info.email) {
+      this.updatePrimaryEmail(info.email, false);
+    }
+    this.syncToCloud();
   }
 
   // --- Skills Methods ---
@@ -507,6 +768,7 @@ Signals no reemplazan a RxJS en eventos asíncronos complejos, pero simplifican 
     const updated = [...this.skillsSignal(), skill];
     this.skillsSignal.set(updated);
     this.saveStorage(this.SKILLS_KEY, updated);
+    this.syncToCloud();
   }
 
   updateSkill(index: number, skill: Skill): void {
@@ -514,12 +776,119 @@ Signals no reemplazan a RxJS en eventos asíncronos complejos, pero simplifican 
     updated[index] = skill;
     this.skillsSignal.set(updated);
     this.saveStorage(this.SKILLS_KEY, updated);
+    this.syncToCloud();
   }
 
   deleteSkill(index: number): void {
     const updated = this.skillsSignal().filter((_, i) => i !== index);
     this.skillsSignal.set(updated);
     this.saveStorage(this.SKILLS_KEY, updated);
+    this.syncToCloud();
+  }
+
+  // --- Technical Docs Methods (CRUD) ---
+  getTechnicalDocs(): TechnicalDoc[] {
+    return this.technicalDocsSignal();
+  }
+
+  addTechnicalDoc(doc: Omit<TechnicalDoc, 'id' | 'lastUpdated'>): void {
+    const newId = Date.now();
+    const nowStr = new Date().toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
+    const newDoc: TechnicalDoc = {
+      ...doc,
+      id: newId,
+      lastUpdated: nowStr
+    };
+    const updated = [newDoc, ...this.technicalDocsSignal()];
+    this.technicalDocsSignal.set(updated);
+    this.saveStorage(this.DOCS_KEY, updated);
+    this.syncToCloud();
+  }
+
+  updateTechnicalDoc(updatedDoc: TechnicalDoc): void {
+    const nowStr = new Date().toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
+    const updated = this.technicalDocsSignal().map(d =>
+      d.id === updatedDoc.id ? { ...updatedDoc, lastUpdated: nowStr } : d
+    );
+    this.technicalDocsSignal.set(updated);
+    this.saveStorage(this.DOCS_KEY, updated);
+    this.syncToCloud();
+  }
+
+  deleteTechnicalDoc(id: number): void {
+    const updated = this.technicalDocsSignal().filter(d => d.id !== id);
+    this.technicalDocsSignal.set(updated);
+    this.saveStorage(this.DOCS_KEY, updated);
+    this.syncToCloud();
+  }
+
+  // --- Contact Links & Channels Methods (CRUD) ---
+  getContactLinks(): ContactLinkItem[] {
+    return this.contactLinksSignal();
+  }
+
+  addContactLink(link: Omit<ContactLinkItem, 'id'>): void {
+    const newId = 'link-' + Date.now();
+    const newLink: ContactLinkItem = {
+      ...link,
+      id: newId,
+      order: link.order ?? (this.contactLinksSignal().length + 1)
+    };
+    const updated = [...this.contactLinksSignal(), newLink];
+    this.contactLinksSignal.set(updated);
+    this.saveStorage(this.CONTACT_LINKS_KEY, updated);
+    this.syncToCloud();
+  }
+
+  updateContactLink(updatedLink: ContactLinkItem): void {
+    const updated = this.contactLinksSignal().map(l =>
+      l.id === updatedLink.id ? updatedLink : l
+    );
+    this.contactLinksSignal.set(updated);
+    this.saveStorage(this.CONTACT_LINKS_KEY, updated);
+    this.syncToCloud();
+  }
+
+  deleteContactLink(id: string): void {
+    const updated = this.contactLinksSignal().filter(l => l.id !== id);
+    this.contactLinksSignal.set(updated);
+    this.saveStorage(this.CONTACT_LINKS_KEY, updated);
+    this.syncToCloud();
+  }
+
+  /**
+   * Updates the primary email across AboutInfo and ContactLinks simultaneously
+   */
+  updatePrimaryEmail(newEmail: string, triggerSync: boolean = true): void {
+    const cleanEmail = newEmail.trim();
+    if (!cleanEmail) return;
+
+    // 1. Update AboutInfo
+    const currentAbout = this.aboutInfoSignal();
+    if (currentAbout.email !== cleanEmail) {
+      const updatedAbout = { ...currentAbout, email: cleanEmail };
+      this.aboutInfoSignal.set(updatedAbout);
+      this.saveStorage(this.ABOUT_KEY, updatedAbout);
+    }
+
+    // 2. Update Contact Links
+    const updatedLinks = this.contactLinksSignal().map(link => {
+      if (link.type === 'email' || link.id === 'email-primary' || link.icon === 'email') {
+        return {
+          ...link,
+          subtitle: cleanEmail,
+          url: `mailto:${cleanEmail}`
+        };
+      }
+      return link;
+    });
+
+    this.contactLinksSignal.set(updatedLinks);
+    this.saveStorage(this.CONTACT_LINKS_KEY, updatedLinks);
+
+    if (triggerSync) {
+      this.syncToCloud();
+    }
   }
 
   // --- Contact Messages Methods ---
@@ -531,16 +900,30 @@ Signals no reemplazan a RxJS en eventos asíncronos complejos, pero simplifican 
     const updated = [msg, ...this.contactMsgsSignal()];
     this.contactMsgsSignal.set(updated);
     this.saveStorage(this.CONTACT_MSGS_KEY, updated);
+    this.syncToCloud();
   }
 
   deleteContactMessage(index: number): void {
     const updated = this.contactMsgsSignal().filter((_, i) => i !== index);
     this.contactMsgsSignal.set(updated);
     this.saveStorage(this.CONTACT_MSGS_KEY, updated);
+    this.syncToCloud();
   }
 
   getSocialLinks(): SocialLink[] {
+    const links = this.contactLinksSignal();
     const about = this.aboutInfoSignal();
+
+    if (links && links.length > 0) {
+      return links
+        .filter(l => l.type === 'url' || l.type === 'email')
+        .map(l => ({
+          platform: l.title,
+          url: l.url,
+          icon: l.icon
+        }));
+    }
+
     return [
       { platform: 'GitHub', url: about.githubUrl || 'https://github.com/StevenPiedra-dev', icon: 'github' },
       { platform: 'LinkedIn', url: about.linkedinUrl || 'https://www.linkedin.com/in/stevenpiedra/', icon: 'linkedin' },

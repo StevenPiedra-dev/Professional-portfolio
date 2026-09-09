@@ -2,12 +2,14 @@ import { Injectable, inject, signal } from '@angular/core';
 import { Observable, of } from 'rxjs';
 import { ContactMessage } from '../models/portfolio.models';
 import { EmailJsService } from './emailjs.service';
+import { PortfolioService } from './portfolio.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ContactService {
   private emailJsService = inject(EmailJsService);
+  private portfolioService = inject(PortfolioService);
 
   isOpen = signal<boolean>(false);
   defaultSubject = 'Job Proposal / Project Inquiry';
@@ -24,10 +26,10 @@ export class ContactService {
   }
 
   sendMessage(data: ContactMessage): Observable<{ success: boolean; message: string }> {
-    const targetEmail = 'steven.piedra02@gmail.com';
+    const targetEmail = this.portfolioService.getAboutInfo().email || 'steven.piedra02@gmail.com';
     const subject = encodeURIComponent(data.subject || this.defaultSubject);
     const body = encodeURIComponent(
-      `Hello Steven,\n\nMy name is: ${data.name}\nMy contact email is: ${data.email}\n\nMessage:\n${data.message}`
+      `Hello,\n\nMy name is: ${data.name}\nMy contact email is: ${data.email}\n\nMessage:\n${data.message}`
     );
 
     // Open user's default email client prefilled
@@ -43,12 +45,13 @@ export class ContactService {
       name: data.name,
       email: data.email,
       subject: data.subject || this.defaultSubject,
-      message: data.message
+      message: data.message,
+      to_email: targetEmail
     }).subscribe();
 
     return of({
       success: true,
-      message: 'Message generated successfully! Your email client has been opened to complete the sending to steven.piedra02@gmail.com.'
+      message: `Message generated successfully! Your email client has been opened to complete the sending to ${targetEmail}.`
     });
   }
 }

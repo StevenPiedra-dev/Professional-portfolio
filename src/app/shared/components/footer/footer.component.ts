@@ -1,5 +1,6 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { PortfolioService } from '../../../core/services/portfolio.service';
 
 @Component({
   selector: 'app-footer',
@@ -9,25 +10,27 @@ import { CommonModule } from '@angular/common';
   styleUrls: ['./footer.component.scss']
 })
 export class FooterComponent {
-  currentYear = new Date().getFullYear();
-  fullName = 'Steven Piedra Villalta';
-  copyrightHolder = 'StevenPiedra-Dev';
+  private portfolioService = inject(PortfolioService);
 
-  socialLinks = [
-    {
-      name: 'GitHub',
-      url: 'https://github.com/StevenPiedra-dev',
-      icon: 'github'
-    },
-    {
-      name: 'LinkedIn',
-      url: 'https://www.linkedin.com/in/stevenpiedra/',
-      icon: 'linkedin'
-    },
-    {
-      name: 'Email',
-      url: 'mailto:steven.piedra02@gmail.com',
-      icon: 'email'
-    }
-  ];
+  currentYear = new Date().getFullYear();
+
+  get aboutInfo() {
+    return this.portfolioService.getAboutInfo();
+  }
+
+  get fullName(): string {
+    return this.aboutInfo.fullName || 'Steven Piedra Villalta';
+  }
+
+  get roleTitle(): string {
+    return this.aboutInfo.roleTitle || 'Full Stack Developer | AI Developer | Product Manager';
+  }
+
+  get copyrightHolder(): string {
+    return this.fullName.split(' ')[0] + '-Dev';
+  }
+
+  get contactLinks() {
+    return this.portfolioService.getContactLinks();
+  }
 }

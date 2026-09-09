@@ -51,8 +51,10 @@ export class ContactModalComponent {
     // Save locally into PortfolioService for immediate Admin Panel display
     this.portfolioService.addContactMessage(formData);
 
-    // Use formsubmit.co to send email without backend/api keys.
-    fetch("https://formsubmit.co/ajax/steven.piedra02@gmail.com", {
+    const targetEmail = this.portfolioService.getAboutInfo().email || 'steven.piedra02@gmail.com';
+
+    // Use formsubmit.co to send email dynamically to current configured email
+    fetch(`https://formsubmit.co/ajax/${encodeURIComponent(targetEmail)}`, {
       method: "POST",
       headers: {
         'Content-Type': 'application/json',

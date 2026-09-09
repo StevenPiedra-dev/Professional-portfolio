@@ -17,25 +17,25 @@ import { BlogDetailModalComponent } from '../../shared/components/blog-detail-mo
       <section class="blog-hero">
         <div class="hero-grid-bg"></div>
         <div class="hero-content">
-          <span class="badge">Artículos y Noticias</span>
+          <span class="badge">Articles & Insights</span>
           <h1>My <span class="gradient-text">Blog</span></h1>
           <p class="hero-subtitle">
-            Reflexiones sobre desarrollo Full Stack, tendencias en IA, diseño de productos y lecciones aprendidas en el mundo real.
+            Reflections on Full Stack engineering, AI innovations, data systems, and lessons learned from production architectures.
           </p>
           <div class="hero-stats">
             <div class="stat-item">
               <span class="stat-num">{{ posts().length }}</span>
-              <span class="stat-lbl">Artículos</span>
+              <span class="stat-lbl">Articles</span>
             </div>
             <div class="stat-div"></div>
             <div class="stat-item">
-              <span class="stat-num">5</span>
-              <span class="stat-lbl">Categorías</span>
+              <span class="stat-num">{{ categories.length - 1 }}</span>
+              <span class="stat-lbl">Topics</span>
             </div>
             <div class="stat-div"></div>
             <div class="stat-item">
-              <span class="stat-num">2.4K</span>
-              <span class="stat-lbl">Lecturas</span>
+              <span class="stat-num">3.2K+</span>
+              <span class="stat-lbl">Reads</span>
             </div>
           </div>
         </div>
@@ -50,7 +50,7 @@ import { BlogDetailModalComponent } from '../../shared/components/blog-detail-mo
               <span *ngIf="!featuredPost()!.coverImage" class="featured-icon">{{ featuredPost()!.icon || '📝' }}</span>
               <div class="featured-visual-overlay"></div>
               <div class="featured-visual-badge">
-                <span>⭐ Artículo destacado</span>
+                <span>⭐ Featured Article</span>
               </div>
             </div>
             <div class="featured-content">
@@ -64,13 +64,13 @@ import { BlogDetailModalComponent } from '../../shared/components/blog-detail-mo
               <p class="featured-excerpt">{{ featuredPost()!.excerpt }}</p>
               <div class="featured-footer">
                 <div class="post-stats">
-                  <span class="post-stat">⏱️ {{ featuredPost()!.readTime }} min lectura</span>
-                  <button class="card-like-btn" [class.liked]="isLiked(featuredPost()!.id)" (click)="onLikePost($event, featuredPost()!)" [title]="isLiked(featuredPost()!.id) ? 'Quitar like' : 'Dar me gusta'">
+                  <span class="post-stat">⏱️ {{ featuredPost()!.readTime }} min read</span>
+                  <button class="card-like-btn" [class.liked]="isLiked(featuredPost()!.id)" (click)="onLikePost($event, featuredPost()!)" [title]="isLiked(featuredPost()!.id) ? 'Unlike' : 'Like'">
                     {{ isLiked(featuredPost()!.id) ? '❤️' : '🤍' }} {{ getLikes(featuredPost()!) }}
                   </button>
                 </div>
                 <button class="read-btn" (click)="onReadPost(featuredPost()!)">
-                  Leer artículo →
+                  Read article →
                 </button>
               </div>
               <div class="featured-tags">
@@ -93,7 +93,7 @@ import { BlogDetailModalComponent } from '../../shared/components/blog-detail-mo
               <input
                 type="text"
                 class="search-input"
-                placeholder="Buscar artículos..."
+                placeholder="Search articles by title, topic, or keyword..."
                 [(ngModel)]="searchQ"
                 id="blog-search"
               />
@@ -120,18 +120,18 @@ import { BlogDetailModalComponent } from '../../shared/components/blog-detail-mo
           <div class="posts-header">
             <h2 class="posts-title">
               <span *ngIf="activeCat() !== 'all'">{{ getCategoryIcon(activeCat()) }} {{ getCategoryLabel(activeCat()) }}</span>
-              <span *ngIf="activeCat() === 'all' && !searchQ">Todos los artículos</span>
-              <span *ngIf="searchQ">Resultados para "<em>{{ searchQ }}</em>"</span>
+              <span *ngIf="activeCat() === 'all' && !searchQ">All Articles</span>
+              <span *ngIf="searchQ">Results for "<em>{{ searchQ }}</em>"</span>
             </h2>
-            <span class="posts-count">{{ filteredPosts().length }} artículo{{ filteredPosts().length !== 1 ? 's' : '' }}</span>
+            <span class="posts-count">{{ filteredPosts().length }} article{{ filteredPosts().length !== 1 ? 's' : '' }}</span>
           </div>
 
           <!-- No results -->
           <div class="no-results" *ngIf="filteredPosts().length === 0">
             <div class="no-results-ico">📭</div>
-            <h3>No se encontraron artículos</h3>
-            <p>Intenta con otro término de búsqueda o categoría.</p>
-            <button class="btn-clear" (click)="clearSearch()">Limpiar filtros</button>
+            <h3>No articles found</h3>
+            <p>Try another search term or select a different category.</p>
+            <button class="btn-clear" (click)="clearSearch()">Clear filters</button>
           </div>
 
           <!-- Grid -->
@@ -141,7 +141,7 @@ import { BlogDetailModalComponent } from '../../shared/components/blog-detail-mo
               class="post-card"
               [class.featured-card]="post.featured"
               (click)="onReadPost(post)"
-              [attr.aria-label]="'Leer: ' + post.title"
+              [attr.aria-label]="'Read: ' + post.title"
               tabindex="0"
               role="button"
               (keydown.enter)="onReadPost(post)"
@@ -162,9 +162,9 @@ import { BlogDetailModalComponent } from '../../shared/components/blog-detail-mo
                 <p class="post-excerpt">{{ post.excerpt }}</p>
                 <div class="post-footer">
                   <div class="post-info-row">
-                    <span class="read-time">⏱️ {{ post.readTime }} min</span>
+                    <span class="read-time">⏱️ {{ post.readTime }} min read</span>
                     <div class="post-engagements">
-                      <button class="card-like-btn" [class.liked]="isLiked(post.id)" (click)="onLikePost($event, post)" [title]="isLiked(post.id) ? 'Quitar like' : 'Dar me gusta'">
+                      <button class="card-like-btn" [class.liked]="isLiked(post.id)" (click)="onLikePost($event, post)" [title]="isLiked(post.id) ? 'Unlike' : 'Like'">
                         {{ isLiked(post.id) ? '❤️' : '🤍' }} {{ getLikes(post) }}
                       </button>
                     </div>
@@ -185,13 +185,13 @@ import { BlogDetailModalComponent } from '../../shared/components/blog-detail-mo
           <div class="newsletter-card">
             <div class="newsletter-icon">✉️</div>
             <div class="newsletter-text">
-              <h2>¿Te gustan estos artículos?</h2>
-              <p>Sígueme en LinkedIn para estar al tanto de los últimos contenidos sobre desarrollo, IA y producto.</p>
+              <h2>Enjoying these articles?</h2>
+              <p>Connect with me on LinkedIn and GitHub to explore more insights on modern software engineering.</p>
             </div>
             <div class="newsletter-actions">
               <a href="https://www.linkedin.com/in/stevenpiedra/" target="_blank" rel="noopener" class="newsletter-btn">
                 <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
-                Seguir en LinkedIn
+                Follow on LinkedIn
               </a>
               <a href="https://github.com/StevenPiedra-dev" target="_blank" rel="noopener" class="newsletter-btn outline">
                 <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M12 0C5.374 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0112 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z"/></svg>
@@ -873,12 +873,15 @@ export class BlogComponent {
   activeCat = signal<string>('all');
 
   categories = [
-    { id: 'all', label: 'Todos', icon: '🗂️' },
-    { id: 'ai', label: 'IA & ML', icon: '🤖' },
+    { id: 'all', label: 'All Articles', icon: '🗂️' },
+    { id: 'ai', label: 'AI & ML', icon: '🤖' },
+    { id: 'data', label: 'Data & Analytics', icon: '📊' },
     { id: 'frontend', label: 'Frontend', icon: '🎨' },
     { id: 'backend', label: 'Backend', icon: '⚙️' },
-    { id: 'devops', label: 'DevOps', icon: '☁️' },
-    { id: 'product', label: 'Producto', icon: '🎯' }
+    { id: 'devops', label: 'DevOps & Cloud', icon: '☁️' },
+    { id: 'architecture', label: 'Architecture', icon: '🏗️' },
+    { id: 'career', label: 'Career & Leadership', icon: '🎯' },
+    { id: 'others', label: 'Others', icon: '✨' }
   ];
 
   featuredPost = computed(() => this.posts().find(p => p.featured));
@@ -904,16 +907,19 @@ export class BlogComponent {
 
   getCategoryIcon(cat: string): string {
     const icons: Record<string, string> = {
-      ai: '🤖', frontend: '🎨', backend: '⚙️', devops: '☁️', product: '🎯'
+      ai: '🤖', data: '📊', frontend: '🎨', backend: '⚙️', devops: '☁️',
+      architecture: '🏗️', career: '🎯', fullstack: '⚡', product: '🎯', others: '✨'
     };
     return icons[cat] || '📝';
   }
 
   getCategoryLabel(cat: string): string {
     const labels: Record<string, string> = {
-      ai: 'IA & ML', frontend: 'Frontend', backend: 'Backend', devops: 'DevOps', product: 'Producto'
+      ai: 'AI & ML', data: 'Data & Analytics', frontend: 'Frontend', backend: 'Backend',
+      devops: 'DevOps & Cloud', architecture: 'Architecture', career: 'Career & Leadership',
+      fullstack: 'Full Stack', product: 'Product & Agile', others: 'Others'
     };
-    return labels[cat] || cat;
+    return labels[cat] || (cat.charAt(0).toUpperCase() + cat.slice(1));
   }
 
   isLiked(id: number): boolean {
