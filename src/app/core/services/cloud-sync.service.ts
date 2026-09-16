@@ -11,8 +11,8 @@ export class CloudSyncService {
   private http = inject(HttpClient);
 
   // Default cloud database endpoint (Firebase Realtime Database REST API)
-  private readonly DEFAULT_CLOUD_URL = 'https://portfolio-steven-default-rtdb.firebaseio.com/portfolio_data.json';
-  private readonly STORAGE_CONFIG_KEY = 'portfolio_cloud_sync_config_v4';
+  private readonly DEFAULT_CLOUD_URL = 'https://steven-piedra-portfolio-default-rtdb.firebaseio.com/portfolio_data.json';
+  private readonly STORAGE_CONFIG_KEY = 'portfolio_cloud_sync_config_v5';
 
   // State signals
   syncStatus = signal<'synced' | 'syncing' | 'offline' | 'error'>('synced');
@@ -42,7 +42,9 @@ export class CloudSyncService {
       const saved = localStorage.getItem(this.STORAGE_CONFIG_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (parsed && parsed.endpoint) return parsed.endpoint;
+        if (parsed && parsed.endpoint && !parsed.endpoint.includes('portfolio-steven-default-rtdb')) {
+          return parsed.endpoint;
+        }
       }
     } catch {}
     return this.DEFAULT_CLOUD_URL;

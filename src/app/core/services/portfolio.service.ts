@@ -562,11 +562,10 @@ npm run build
    */
   syncFromCloud(): void {
     this.cloudSync.fetchFromCloud().subscribe(data => {
-      if (data) {
-        if (data.projects && Array.isArray(data.projects)) {
-          this.projectsSignal.set(data.projects);
-          this.saveStorage(this.PROJECTS_KEY, data.projects);
-        }
+      if (data && data.projects && Array.isArray(data.projects) && data.projects.length > 0) {
+        this.projectsSignal.set(data.projects);
+        this.saveStorage(this.PROJECTS_KEY, data.projects);
+
         if (data.blogPosts && Array.isArray(data.blogPosts)) {
           this.blogPostsSignal.set(data.blogPosts);
           this.saveStorage(this.BLOGS_KEY, data.blogPosts);
@@ -595,8 +594,18 @@ npm run build
           this.contactLinksSignal.set(data.contactLinks);
           this.saveStorage(this.CONTACT_LINKS_KEY, data.contactLinks);
         }
+      } else if (data === null) {
+        // Cloud database is empty; seed it automatically with current portfolio data
+        this.syncToCloud();
       }
     });
+  }
+
+  /**
+   * Manually pushes all current local data to the cloud
+   */
+  forcePushToCloud(): void {
+    this.syncToCloud();
   }
 
   // --- Projects Methods ---

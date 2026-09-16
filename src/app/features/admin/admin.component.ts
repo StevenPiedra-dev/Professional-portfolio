@@ -688,9 +688,12 @@ import { Project, BlogPost, SiteMetrics, AboutInfo, ContactMessage, Skill, Timel
           <!-- Force Sync Section -->
           <div class="cloud-force-section">
             <button class="btn btn-primary btn-large" (click)="forceSyncNow()">
-              🔄 Force Sync Now
+              🔄 Pull from Cloud (Download)
             </button>
-            <p>Forces download of the latest data from the cloud and updates all devices.</p>
+            <button class="btn btn-primary btn-large" (click)="forcePushNow()" style="margin-left: 0.75rem; background: linear-gradient(135deg, #10b981, #059669); border: none;">
+              ☁️ Push to Cloud (Upload All)
+            </button>
+            <p>Sincroniza y propaga todos los proyectos, blogs y datos a todos tus dispositivos.</p>
           </div>
         </section>
 
@@ -2475,6 +2478,10 @@ export class AdminComponent implements OnInit {
   // --- Cloud Sync ---
   forceSyncNow() {
     this.portfolioService.syncFromCloud();
+  }
+
+  forcePushNow() {
+    this.portfolioService.forcePushToCloud();
   }
 
   saveCloudEndpoint() {
