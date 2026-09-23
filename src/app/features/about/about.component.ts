@@ -230,47 +230,40 @@ interface ValueCard {
         </div>
       </section>
 
-      <!-- ── Languages & References ── -->
-      <section class="languages-refs-section">
+      <!-- ── Languages ── -->
+      <section class="languages-section">
         <div class="section-container">
           <div class="section-head">
-            <span class="section-badge">Credentials</span>
-            <h2 class="section-title">Languages & Work References</h2>
-            <p class="section-subtitle">Official verified language proficiency and professional industry contacts.</p>
+            <span class="section-badge">Languages</span>
+            <h2 class="section-title">Language Proficiency</h2>
+            <p class="section-subtitle">Official verified language communication skills.</p>
           </div>
-          <div class="langs-refs-grid">
-            <div class="lang-ref-card">
-              <div class="card-top-icon">🌐</div>
-              <h4>Language Proficiency</h4>
-              <div class="lang-pills">
-                <div class="lang-pill">
-                  <span class="lang-name">Spanish</span>
-                  <span class="lang-level">Native / C2</span>
+          <div class="langs-grid">
+            <div class="lang-card">
+              <div class="lang-card-header">
+                <div class="lang-icon">🇪🇸</div>
+                <div class="lang-info">
+                  <h4 class="lang-title">Spanish (Español)</h4>
+                  <span class="lang-desc">Native Language / C2 Level</span>
                 </div>
-                <div class="lang-pill">
-                  <span class="lang-name">English</span>
-                  <span class="lang-level">Professional / B2+</span>
-                </div>
+                <span class="lang-badge native">Native (C2)</span>
+              </div>
+              <div class="lang-progress-track">
+                <div class="lang-progress-fill" style="width: 100%"></div>
               </div>
             </div>
 
-            <div class="lang-ref-card">
-              <div class="card-top-icon">👔</div>
-              <h4>Mr. Matias Guillén Solano</h4>
-              <p class="ref-role">Emerging Business Manager / BAC</p>
-              <div class="ref-contact">
-                <span>📞 (+506) 7007-7614</span>
-                <a href="mailto:matiasguillen94@gmail.com">✉️ matiasguillen94&#64;gmail.com</a>
+            <div class="lang-card">
+              <div class="lang-card-header">
+                <div class="lang-icon">🇺🇸</div>
+                <div class="lang-info">
+                  <h4 class="lang-title">English (Inglés)</h4>
+                  <span class="lang-desc">Full Professional Working Proficiency / B2+ Level</span>
+                </div>
+                <span class="lang-badge professional">Professional (B2+)</span>
               </div>
-            </div>
-
-            <div class="lang-ref-card">
-              <div class="card-top-icon">🏛️</div>
-              <h4>Mr. Edward Centeno Guido</h4>
-              <p class="ref-role">Software Architect / BAC</p>
-              <div class="ref-contact">
-                <span>📞 (+506) 8565-7362</span>
-                <a href="mailto:edwardcenteno18@gmail.com">✉️ edwardcenteno18&#64;gmail.com</a>
+              <div class="lang-progress-track">
+                <div class="lang-progress-fill" style="width: 85%"></div>
               </div>
             </div>
           </div>
@@ -991,28 +984,27 @@ interface ValueCard {
       }
     }
 
-    /* ── Languages & References ── */
-    .languages-refs-section {
+    /* ── Languages ── */
+    .languages-section {
       padding: 0 0 5rem;
     }
 
-    .langs-refs-grid {
+    .langs-grid {
       display: grid;
       grid-template-columns: 1fr;
       gap: 1.5rem;
 
-      @media (min-width: 640px) { grid-template-columns: repeat(2, 1fr); }
-      @media (min-width: 1024px) { grid-template-columns: repeat(3, 1fr); }
+      @media (min-width: 768px) { grid-template-columns: repeat(2, 1fr); }
     }
 
-    .lang-ref-card {
+    .lang-card {
       background: rgba(15,23,42,0.55);
       border: 1px solid var(--border-subtle);
       border-radius: 16px;
       padding: 1.5rem;
       display: flex;
       flex-direction: column;
-      gap: 0.75rem;
+      gap: 1.25rem;
       transition: all 0.25s ease;
       backdrop-filter: blur(10px);
 
@@ -1021,69 +1013,70 @@ interface ValueCard {
         transform: translateY(-3px);
         box-shadow: 0 12px 30px rgba(0,0,0,0.25);
       }
-
-      .card-top-icon {
-        font-size: 2rem;
-      }
-
-      h4 {
-        font-size: 1.05rem;
-        font-weight: 700;
-        color: #F8FAFC;
-        margin: 0;
-      }
-
-      .ref-role {
-        font-size: 0.85rem;
-        color: var(--blue-400);
-        font-weight: 500;
-        margin: 0;
-      }
-
-      .ref-contact {
-        display: flex;
-        flex-direction: column;
-        gap: 0.35rem;
-        font-size: 0.8rem;
-        color: var(--text-secondary);
-        margin-top: 0.25rem;
-
-        a {
-          color: var(--text-secondary);
-          text-decoration: none;
-          transition: color 0.2s;
-          &:hover { color: var(--blue-400); }
-        }
-      }
     }
 
-    .lang-pills {
+    .lang-card-header {
       display: flex;
-      flex-direction: column;
-      gap: 0.6rem;
-      margin-top: 0.25rem;
-    }
-
-    .lang-pill {
-      display: flex;
-      justify-content: space-between;
       align-items: center;
-      background: rgba(255,255,255,0.04);
-      border: 1px solid var(--border-subtle);
-      border-radius: 8px;
-      padding: 0.5rem 0.85rem;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
 
-      .lang-name {
-        font-size: 0.85rem;
-        font-weight: 600;
-        color: #F8FAFC;
-      }
+    .lang-icon {
+      font-size: 2.2rem;
+      line-height: 1;
+    }
 
-      .lang-level {
-        font-size: 0.75rem;
+    .lang-info {
+      flex: 1;
+      min-width: 150px;
+    }
+
+    .lang-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: #F8FAFC;
+      margin: 0 0 0.2rem;
+    }
+
+    .lang-desc {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+    }
+
+    .lang-badge {
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 0.25rem 0.75rem;
+      border-radius: 100px;
+      letter-spacing: 0.03em;
+
+      &.native {
         color: #34D399;
-        font-weight: 600;
+        background: rgba(52,211,153,0.12);
+        border: 1px solid rgba(52,211,153,0.25);
       }
+
+      &.professional {
+        color: #60A5FA;
+        background: rgba(96,165,250,0.12);
+        border: 1px solid rgba(96,165,250,0.25);
+      }
+    }
+
+    .lang-progress-track {
+      width: 100%;
+      height: 6px;
+      background: rgba(255,255,255,0.08);
+      border-radius: 100px;
+      overflow: hidden;
+    }
+
+    .lang-progress-fill {
+      height: 100%;
+      border-radius: 100px;
+      background: linear-gradient(90deg, #3B82F6, #34D399);
+      transition: width 0.5s ease-in-out;
     }
 
     /* ── CTA ── */
