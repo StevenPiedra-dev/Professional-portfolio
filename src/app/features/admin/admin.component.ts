@@ -220,7 +220,7 @@ import { Project, BlogPost, SiteMetrics, AboutInfo, ContactMessage, Skill, Timel
                   <div class="cv-file-badge">
                     <span class="file-icon">📄</span>
                     <div class="file-meta">
-                      <strong>{{ aboutForm.cvFileName || 'CV_Steven_Piedra.pdf' }}</strong>
+                      <strong>{{ aboutForm.cvFileName || 'Steven_Piedra_CV.pdf' }}</strong>
                       <span class="file-sub">PDF document for public download</span>
                     </div>
                   </div>
@@ -2131,8 +2131,17 @@ export class AdminComponent implements OnInit {
     // Initialize cloud endpoint input
     this.cloudEndpointInput = this.cloudSync.cloudEndpoint();
 
-    // Refresh about form with current state
-    this.aboutForm = { ...this.portfolioService.getAboutInfo() };
+    // Refresh about form with current state, ensuring timeline & certifications are safely preserved
+    const currentAbout = this.portfolioService.getAboutInfo();
+    this.aboutForm = {
+      ...currentAbout,
+      timeline: (currentAbout.timeline && currentAbout.timeline.length > 0)
+        ? [...currentAbout.timeline]
+        : [...(this.portfolioService.aboutInfoSignal().timeline || [])],
+      certifications: (currentAbout.certifications && currentAbout.certifications.length > 0)
+        ? [...currentAbout.certifications]
+        : [...(this.portfolioService.aboutInfoSignal().certifications || [])]
+    };
   }
 
   onLogout() {

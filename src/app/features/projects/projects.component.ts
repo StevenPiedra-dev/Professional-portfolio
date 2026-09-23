@@ -29,12 +29,12 @@ import { ProjectDetailModalComponent } from '../../shared/components/project-det
             </div>
             <div class="stat-divider"></div>
             <div class="stat-pill">
-              <span class="stat-number">8+</span>
+              <span class="stat-number">{{ totalTechnologies() }}+</span>
               <span class="stat-label">Technologies</span>
             </div>
             <div class="stat-divider"></div>
             <div class="stat-pill">
-              <span class="stat-number">3+</span>
+              <span class="stat-number">{{ experienceYears() }}+</span>
               <span class="stat-label">Years</span>
             </div>
           </div>
@@ -921,6 +921,22 @@ export class ProjectsComponent {
   selectedProject = signal<Project | null>(null);
   allProjects = this.portfolioService.projectsSignal;
   aboutInfo = this.portfolioService.aboutInfoSignal;
+
+  // Dynamically computed total technologies across all projects (or skills fallback)
+  totalTechnologies = computed(() => {
+    const techSet = new Set<string>();
+    this.allProjects().forEach(p => {
+      (p.technologies || []).forEach(t => {
+        if (t && t.trim()) techSet.add(t.trim().toLowerCase());
+      });
+    });
+    return techSet.size || this.portfolioService.skillsSignal().length || 8;
+  });
+
+  // Dynamically computed years of experience from About Me information
+  experienceYears = computed(() => {
+    return this.aboutInfo().experienceYears || 3;
+  });
 
   searchQuery = '';
   sortBy = 'featured';

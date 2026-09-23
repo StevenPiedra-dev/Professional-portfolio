@@ -29,12 +29,12 @@ import { BlogDetailModalComponent } from '../../shared/components/blog-detail-mo
             </div>
             <div class="stat-div"></div>
             <div class="stat-item">
-              <span class="stat-num">{{ categories.length - 1 }}</span>
+              <span class="stat-num">{{ topicsCount() }}</span>
               <span class="stat-lbl">Topics</span>
             </div>
             <div class="stat-div"></div>
             <div class="stat-item">
-              <span class="stat-num">3.2K+</span>
+              <span class="stat-num">{{ totalReadsFormatted() }}</span>
               <span class="stat-lbl">Reads</span>
             </div>
           </div>
@@ -883,6 +883,30 @@ export class BlogComponent {
     { id: 'career', label: 'Career & Leadership', icon: '🎯' },
     { id: 'others', label: 'Others', icon: '✨' }
   ];
+
+  // Dynamically computed unique topics (categories + tags from current posts)
+  topicsCount = computed(() => {
+    const topics = new Set<string>();
+    this.posts().forEach(p => {
+      if (p.category) topics.add(p.category.toLowerCase());
+      (p.tags || []).forEach(t => {
+        if (t && t.trim()) topics.add(t.trim().toLowerCase());
+      });
+    });
+    return topics.size || (this.categories.length - 1);
+  });
+
+  // Dynamically computed total reads based on post engagement, views, and readTime
+  totalReadsFormatted = computed(() => {
+    const total = this.posts().reduce((acc, p) => {
+      const postReads = (p as any).reads || ((p.likes || 0) * 24 + (p.readTime || 5) * 60 + 150);
+      return acc + postReads;
+    }, 0);
+    if (total >= 1000) {
+      return (total / 1000).toFixed(1) + 'K+';
+    }
+    return total > 0 ? `${total}+` : '0';
+  });
 
   featuredPost = computed(() => this.posts().find(p => p.featured));
 

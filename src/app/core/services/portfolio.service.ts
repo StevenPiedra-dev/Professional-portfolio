@@ -272,13 +272,14 @@ Signals do not replace RxJS for complex asynchronous coordination, but they esta
 
   private initialAboutInfo: AboutInfo = {
     fullName: 'Steven Piedra Villalta',
-    roleTitle: 'Full Stack Developer | AI Developer | Product Manager',
-    bioParagraph1: 'Data Analyst and Full Stack Developer with experience in data analysis and full-stack development. Experienced in data collection and quantitative and qualitative analysis, using tools such as SQL, Python, Power BI, Tableau, and Excel.',
-    bioParagraph2: 'Experienced in payment methods and emerging technologies, as well as tools such as .NET Core, React, REST API, Microservices, Azure Database, and MySQL. Deeply passionate about data and how technology enhances business performance and enables more efficient delivery.',
-    experienceYears: 4,
+    roleTitle: 'Full Stack Developer | Data Analyst',
+    bioParagraph1: 'Full Stack Developer and Data Analyst with 3+ years of experience designing, developing, and deploying enterprise web applications and business intelligence architectures using .NET Core, React, Angular, SQL, Python, and Microsoft Azure.',
+    bioParagraph2: 'Experienced in data analysis in the financial sector, quantitative and qualitative analysis of Fintechs and payment methods, building RESTful APIs, microservices, and interactive executive dashboards with Power BI and Tableau. Passionate about leveraging data and emerging cloud technologies to drive strategic decision-making and operational excellence.',
+    experienceYears: 3,
     technologiesCount: 16,
     completedProjectsCount: 10,
-    cvUrl: 'assets/CV_Steven_Piedra.pdf',
+    cvUrl: 'assets/Steven_Piedra_CV.pdf',
+    cvFileName: 'Steven_Piedra_CV.pdf',
     githubUrl: 'https://github.com/StevenPiedra-dev',
     linkedinUrl: 'https://www.linkedin.com/in/stevenpiedra/',
     email: 'steven.piedra02@gmail.com',
@@ -287,9 +288,10 @@ Signals do not replace RxJS for complex asynchronous coordination, but they esta
         year: '2024',
         period: 'Oct 2024 - Present',
         role: 'Investigation Analyst I',
-        company: 'BAC, Calle Blancos',
-        description: 'Experience using data analysis tools in the financial field and creating executive presentations for senior management and vice presidents. Experience in quantitative and qualitative analysis of Fintechs and payment methods in general. Experience with emerging technologies and businesses that generate new revenue streams for the organization.',
-        tags: ['Data Analysis', 'Fintech', 'Presentations'],
+        company: 'BAC',
+        location: 'San José, Costa Rica',
+        description: 'Experience using data analysis tools in the financial field and creating executive presentations for senior management and vice presidents. Quantitative and qualitative analysis of Fintechs and payment methods. Strategic evaluation of emerging technologies and digital business models driving organizational revenue.',
+        tags: ['Data Analysis', 'Fintech', 'Financial Analytics', 'Executive Reports', 'BAC'],
         icon: '📊',
         type: 'work'
       },
@@ -297,9 +299,10 @@ Signals do not replace RxJS for complex asynchronous coordination, but they esta
         year: '2023',
         period: 'Jun 2023 - Sep 2024',
         role: 'Critical Processes Assistant',
-        company: 'BAC, Curridabat',
-        description: 'I created and managed dashboards in Power BI and Tableau, managed processes with large amounts of data (data acquisition, transformation, and loading). I prepared presentations for senior executives and provided management support.',
-        tags: ['Power BI', 'Tableau', 'Data Transformation'],
+        company: 'BAC',
+        location: 'San José, Costa Rica',
+        description: 'Developed and maintained interactive dashboards in Power BI and Tableau supporting KPI monitoring and executive decision-making. Managed end-to-end data acquisition, transformation, and loading (ETL) processes ensuring high data quality and accuracy across enterprise datasets.',
+        tags: ['Power BI', 'Tableau', 'ETL', 'SQL', 'Data Quality', 'BAC'],
         icon: '📈',
         type: 'work'
       },
@@ -307,23 +310,24 @@ Signals do not replace RxJS for complex asynchronous coordination, but they esta
         year: '2022',
         period: 'Jan 2022 - Jan 2023',
         role: 'Fullstack Developer',
-        company: 'Freelance, San Pedro',
-        description: 'Developing using .NetCore, Azure Database as backend and React as the framework, the project was developed implementing RESTful APIs, authentication modules, and relational database models. Delivered production-ready deployment and user training.',
-        tags: ['.NET Core', 'Azure', 'React', 'REST API'],
+        company: 'Freelance',
+        location: 'San José, Costa Rica',
+        description: 'Designed and deployed web solutions using .NET Core, React, and Azure SQL Database in cross-functional technical teams. Implemented RESTful APIs, authentication modules, relational database schemas, and continuous delivery deployment pipelines.',
+        tags: ['.NET Core', 'React', 'Azure SQL Database', 'REST APIs', 'Freelance'],
         icon: '💻',
         type: 'work'
       }
     ],
     certifications: [
-      { icon: '🎓', name: 'Professional MBA with an emphasis in Management', issuer: 'Universidad de Costa Rica (UCR)', year: 'Sep 2025 - Present', level: 'In-Progress' },
+      { icon: '🎓', name: 'Professional MBA with an Emphasis in Management', issuer: 'Universidad de Costa Rica (UCR)', year: 'Sep 2025 - Present', level: 'In-Progress' },
       { icon: '📊', name: 'Big Data Specialization', issuer: 'Universidad Fidélitas', year: 'Jan 2022 - May 2023', level: 'Completed' },
       { icon: '💻', name: 'Bachelor’s Degree in Systems Engineering', issuer: 'Universidad Fidélitas', year: 'Jan 2020 - Sep 2023', level: 'Completed' }
     ],
     values: [
-      { icon: '🏗️', title: 'Clean Code', description: 'I prioritize maintainable, scalable, and well-documented code following SOLID principles and Clean Architecture.' },
-      { icon: '🚀', title: 'Continuous Delivery', description: 'Agile methodologies and CI/CD to deliver value quickly and incrementally to the client.' },
-      { icon: '🤖', title: 'AI-Driven', description: 'I integrate AI capabilities to build intelligent solutions that solve complex problems.' },
-      { icon: '👥', title: 'Collaboration', description: 'I believe in teamwork, open communication, and collective growth to achieve great goals.' }
+      { icon: '🏗️', title: 'Clean Architecture & Code', description: 'I prioritize maintainable, scalable, and well-documented software adhering to SOLID principles and Clean Architecture.' },
+      { icon: '🚀', title: 'Continuous Delivery', description: 'Agile methodologies, automated CI/CD pipelines, and incremental releases delivering reliable user value.' },
+      { icon: '🤖', title: 'Data & AI Innovation', description: 'Harnessing analytical insights and artificial intelligence models to solve complex enterprise challenges.' },
+      { icon: '👥', title: 'Collaborative Leadership', description: 'Promoting cross-functional alignment, proactive communication, and high-impact engineering culture.' }
     ]
   };
 
@@ -586,8 +590,23 @@ npm run build
           this.saveStorage(this.BLOGS_KEY, data.blogPosts);
         }
         if (data.aboutInfo) {
-          this.aboutInfoSignal.set(data.aboutInfo);
-          this.saveStorage(this.ABOUT_KEY, data.aboutInfo);
+          // Guard: merge with initial CV info to prevent incomplete cloud objects from wiping out timeline/certifications
+          const currentAbout = this.aboutInfoSignal();
+          const mergedAbout: AboutInfo = {
+            ...this.initialAboutInfo,
+            ...data.aboutInfo,
+            timeline: (data.aboutInfo.timeline && Array.isArray(data.aboutInfo.timeline) && data.aboutInfo.timeline.length > 0)
+              ? data.aboutInfo.timeline
+              : (currentAbout.timeline && currentAbout.timeline.length > 0 ? currentAbout.timeline : this.initialAboutInfo.timeline),
+            certifications: (data.aboutInfo.certifications && Array.isArray(data.aboutInfo.certifications) && data.aboutInfo.certifications.length > 0)
+              ? data.aboutInfo.certifications
+              : (currentAbout.certifications && currentAbout.certifications.length > 0 ? currentAbout.certifications : this.initialAboutInfo.certifications),
+            values: (data.aboutInfo.values && Array.isArray(data.aboutInfo.values) && data.aboutInfo.values.length > 0)
+              ? data.aboutInfo.values
+              : (currentAbout.values && currentAbout.values.length > 0 ? currentAbout.values : this.initialAboutInfo.values)
+          };
+          this.aboutInfoSignal.set(mergedAbout);
+          this.saveStorage(this.ABOUT_KEY, mergedAbout);
         }
         if (data.skills && Array.isArray(data.skills)) {
           this.skillsSignal.set(data.skills);
@@ -597,10 +616,17 @@ npm run build
           this.metricsSignal.set(data.metrics);
           this.saveStorage(this.METRICS_KEY, data.metrics);
         }
-        if (data.contactMsgs && Array.isArray(data.contactMsgs)) {
-          this.contactMsgsSignal.set(data.contactMsgs);
-          this.saveStorage(this.CONTACT_MSGS_KEY, data.contactMsgs);
+        // Normalize contactMsgs from Firebase (handle null, undefined, array, or object with numeric keys)
+        let incomingMsgs: ContactMessage[] = [];
+        if (data.contactMsgs) {
+          if (Array.isArray(data.contactMsgs)) {
+            incomingMsgs = data.contactMsgs.filter(m => m != null);
+          } else if (typeof data.contactMsgs === 'object') {
+            incomingMsgs = Object.values(data.contactMsgs).filter((m): m is ContactMessage => m != null && typeof m === 'object' && 'email' in m);
+          }
         }
+        this.contactMsgsSignal.set(incomingMsgs);
+        this.saveStorage(this.CONTACT_MSGS_KEY, incomingMsgs);
         if (data.technicalDocs && Array.isArray(data.technicalDocs) && data.technicalDocs.length > 0) {
           this.technicalDocsSignal.set(data.technicalDocs);
           this.saveStorage(this.DOCS_KEY, data.technicalDocs);
@@ -781,6 +807,7 @@ npm run build
   updateAboutInfo(info: AboutInfo): void {
     this.aboutInfoSignal.set(info);
     this.saveStorage(this.ABOUT_KEY, info);
+    this._lastLocalWriteAt = Date.now();
 
     // If email was updated, synchronize contact link email
     if (info.email) {
@@ -939,6 +966,7 @@ npm run build
     const updated = [msg, ...this.contactMsgsSignal()];
     this.contactMsgsSignal.set(updated);
     this.saveStorage(this.CONTACT_MSGS_KEY, updated);
+    this._lastLocalWriteAt = Date.now();
     this.syncToCloud();
   }
 
@@ -946,6 +974,7 @@ npm run build
     const updated = this.contactMsgsSignal().filter((_, i) => i !== index);
     this.contactMsgsSignal.set(updated);
     this.saveStorage(this.CONTACT_MSGS_KEY, updated);
+    this._lastLocalWriteAt = Date.now();
     this.syncToCloud();
   }
 

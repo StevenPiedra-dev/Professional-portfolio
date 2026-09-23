@@ -90,7 +90,7 @@ interface ValueCard {
               <a [href]="aboutInfo().githubUrl || 'https://github.com/StevenPiedra-dev'" target="_blank" rel="noopener" class="btn-primary">
                 View GitHub
               </a>
-              <a [href]="aboutInfo().cvUrl || 'assets/CV_Steven_Piedra.pdf'" target="_blank" [download]="aboutInfo().cvFileName || 'CV_Steven_Piedra.pdf'" class="btn-outline">
+              <a [href]="aboutInfo().cvUrl || 'assets/Steven_Piedra_CV.pdf'" target="_blank" [download]="aboutInfo().cvFileName || 'Steven_Piedra_CV.pdf'" class="btn-outline">
                 Download CV
               </a>
             </div>
@@ -225,6 +225,53 @@ interface ValueCard {
                 <span class="cert-year">{{ cert.year }}</span>
               </div>
               <div class="cert-badge" [class]="cert.level">{{ cert.level }}</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Languages & References ── -->
+      <section class="languages-refs-section">
+        <div class="section-container">
+          <div class="section-head">
+            <span class="section-badge">Credentials</span>
+            <h2 class="section-title">Languages & Work References</h2>
+            <p class="section-subtitle">Official verified language proficiency and professional industry contacts.</p>
+          </div>
+          <div class="langs-refs-grid">
+            <div class="lang-ref-card">
+              <div class="card-top-icon">🌐</div>
+              <h4>Language Proficiency</h4>
+              <div class="lang-pills">
+                <div class="lang-pill">
+                  <span class="lang-name">Spanish</span>
+                  <span class="lang-level">Native / C2</span>
+                </div>
+                <div class="lang-pill">
+                  <span class="lang-name">English</span>
+                  <span class="lang-level">Professional / B2+</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="lang-ref-card">
+              <div class="card-top-icon">👔</div>
+              <h4>Mr. Matias Guillén Solano</h4>
+              <p class="ref-role">Emerging Business Manager / BAC</p>
+              <div class="ref-contact">
+                <span>📞 (+506) 7007-7614</span>
+                <a href="mailto:matiasguillen94@gmail.com">✉️ matiasguillen94&#64;gmail.com</a>
+              </div>
+            </div>
+
+            <div class="lang-ref-card">
+              <div class="card-top-icon">🏛️</div>
+              <h4>Mr. Edward Centeno Guido</h4>
+              <p class="ref-role">Software Architect / BAC</p>
+              <div class="ref-contact">
+                <span>📞 (+506) 8565-7362</span>
+                <a href="mailto:edwardcenteno18@gmail.com">✉️ edwardcenteno18&#64;gmail.com</a>
+              </div>
             </div>
           </div>
         </div>
@@ -944,6 +991,101 @@ interface ValueCard {
       }
     }
 
+    /* ── Languages & References ── */
+    .languages-refs-section {
+      padding: 0 0 5rem;
+    }
+
+    .langs-refs-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1.5rem;
+
+      @media (min-width: 640px) { grid-template-columns: repeat(2, 1fr); }
+      @media (min-width: 1024px) { grid-template-columns: repeat(3, 1fr); }
+    }
+
+    .lang-ref-card {
+      background: rgba(15,23,42,0.55);
+      border: 1px solid var(--border-subtle);
+      border-radius: 16px;
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      transition: all 0.25s ease;
+      backdrop-filter: blur(10px);
+
+      &:hover {
+        border-color: var(--border-medium);
+        transform: translateY(-3px);
+        box-shadow: 0 12px 30px rgba(0,0,0,0.25);
+      }
+
+      .card-top-icon {
+        font-size: 2rem;
+      }
+
+      h4 {
+        font-size: 1.05rem;
+        font-weight: 700;
+        color: #F8FAFC;
+        margin: 0;
+      }
+
+      .ref-role {
+        font-size: 0.85rem;
+        color: var(--blue-400);
+        font-weight: 500;
+        margin: 0;
+      }
+
+      .ref-contact {
+        display: flex;
+        flex-direction: column;
+        gap: 0.35rem;
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+        margin-top: 0.25rem;
+
+        a {
+          color: var(--text-secondary);
+          text-decoration: none;
+          transition: color 0.2s;
+          &:hover { color: var(--blue-400); }
+        }
+      }
+    }
+
+    .lang-pills {
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+      margin-top: 0.25rem;
+    }
+
+    .lang-pill {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      padding: 0.5rem 0.85rem;
+
+      .lang-name {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #F8FAFC;
+      }
+
+      .lang-level {
+        font-size: 0.75rem;
+        color: #34D399;
+        font-weight: 600;
+      }
+    }
+
     /* ── CTA ── */
     .about-cta {
       padding: 5rem 1.5rem;
@@ -1026,9 +1168,20 @@ export class AboutComponent implements OnInit {
   // Reactive about info from service
   aboutInfo = this.portfolioService.aboutInfoSignal;
 
-  get timeline() { return this.aboutInfo().timeline || []; }
-  get certifications() { return this.aboutInfo().certifications || []; }
-  get values() { return this.aboutInfo().values || this._defaultValues; }
+  get timeline() {
+    const list = this.aboutInfo().timeline;
+    return (list && list.length > 0) ? list : (this.portfolioService.getAboutInfo().timeline || []);
+  }
+
+  get certifications() {
+    const list = this.aboutInfo().certifications;
+    return (list && list.length > 0) ? list : (this.portfolioService.getAboutInfo().certifications || []);
+  }
+
+  get values() {
+    const list = this.aboutInfo().values;
+    return (list && list.length > 0) ? list : this._defaultValues;
+  }
 
   private _defaultValues: ValueCard[] = [
     { icon: '🏗️', title: 'Clean Code', description: 'I prioritize maintainable, scalable, and well-documented code following SOLID principles and Clean Architecture.' },
