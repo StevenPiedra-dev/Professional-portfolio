@@ -512,16 +512,18 @@ npm run build
   contactLinksSignal = signal<ContactLinkItem[]>(this.loadStorage(this.CONTACT_LINKS_KEY, this.initialContactLinks));
   userVotesSignal = signal<{ projects: number[]; blogs: number[] }>(this.loadStorage(this.USER_VOTES_KEY, { projects: [], blogs: [] }));
 
-  constructor() {
-    // Attempt initial cloud sync on startup
-    this.syncFromCloud();
+  /**
+   * Timestamp of the last local write. Used to detect if a cloud fetch is stale
+   * (i.e., the local data was modified after the cloud was last updated).
+   */
+  private _lastLocalWriteAt: number = 0;
 
-    // Re-sync on window focus (e.g., when user switches back from another tab or device)
-    if (typeof window !== 'undefined') {
-      window.addEventListener('focus', () => {
-        this.syncFromCloud();
-      });
-    }
+  constructor() {
+    // Attempt initial cloud sync on startup only
+    // NOTE: We intentionally do NOT listen to window.focus to avoid a race
+    // condition where the confirm() dialog (delete/edit) causes a focus event
+    // that re-downloads stale cloud data and overwrites the local CRUD change.
+    this.syncFromCloud();
   }
 
   private loadStorage<T>(key: string, fallback: T): T {
@@ -558,11 +560,24 @@ npm run build
   }
 
   /**
-   * Syncs latest data from cloud into local signals and storage
+   * Syncs latest data from cloud into local signals and storage.
+   * Triple-guarded against overwriting local CRUD changes:
+   *  1. fetchFromCloud() returns null immediately if _writeLock is active
+   *  2. We re-check hasPendingSave here in case the GET was already in-flight
+   *  3. We compare timestamps as a last-resort tie-breaker
    */
   syncFromCloud(): void {
     this.cloudSync.fetchFromCloud().subscribe(data => {
+      // Guard 1: a save was queued or is in-flight — never overwrite local edits
+      if (this.cloudSync.hasPendingSave) return;
+
       if (data && data.projects && Array.isArray(data.projects) && data.projects.length > 0) {
+        // Guard 2: local data is newer than cloud snapshot — skip overwrite
+        const cloudTs = data.lastSyncedAt ? new Date(data.lastSyncedAt).getTime() : 0;
+        if (this._lastLocalWriteAt > 0 && this._lastLocalWriteAt > cloudTs) {
+          return;
+        }
+
         this.projectsSignal.set(data.projects);
         this.saveStorage(this.PROJECTS_KEY, data.projects);
 
@@ -595,7 +610,7 @@ npm run build
           this.saveStorage(this.CONTACT_LINKS_KEY, data.contactLinks);
         }
       } else if (data === null) {
-        // Cloud database is empty; seed it automatically with current portfolio data
+        // Cloud database is empty; seed it with current local data
         this.syncToCloud();
       }
     });
@@ -619,6 +634,7 @@ npm run build
     const updated = [newProj, ...this.projectsSignal()];
     this.projectsSignal.set(updated);
     this.saveStorage(this.PROJECTS_KEY, updated);
+    this._lastLocalWriteAt = Date.now();
     this.syncToCloud();
   }
 
@@ -626,6 +642,7 @@ npm run build
     const updated = this.projectsSignal().map(p => p.id === updatedProject.id ? updatedProject : p);
     this.projectsSignal.set(updated);
     this.saveStorage(this.PROJECTS_KEY, updated);
+    this._lastLocalWriteAt = Date.now();
     this.syncToCloud();
   }
 
@@ -633,6 +650,7 @@ npm run build
     const updated = this.projectsSignal().filter(p => p.id !== id);
     this.projectsSignal.set(updated);
     this.saveStorage(this.PROJECTS_KEY, updated);
+    this._lastLocalWriteAt = Date.now();
     this.syncToCloud();
   }
 
@@ -681,6 +699,7 @@ npm run build
     this.blogPostsSignal.set(updated);
     this.saveStorage(this.BLOGS_KEY, updated);
     this.updateMetrics({ articlesPublished: this.blogPostsSignal().length });
+    this._lastLocalWriteAt = Date.now();
     this.syncToCloud();
   }
 
@@ -688,6 +707,7 @@ npm run build
     const updated = this.blogPostsSignal().map(b => b.id === updatedPost.id ? updatedPost : b);
     this.blogPostsSignal.set(updated);
     this.saveStorage(this.BLOGS_KEY, updated);
+    this._lastLocalWriteAt = Date.now();
     this.syncToCloud();
   }
 
@@ -696,6 +716,7 @@ npm run build
     this.blogPostsSignal.set(updated);
     this.saveStorage(this.BLOGS_KEY, updated);
     this.updateMetrics({ articlesPublished: updated.length });
+    this._lastLocalWriteAt = Date.now();
     this.syncToCloud();
   }
 
@@ -777,6 +798,7 @@ npm run build
     const updated = [...this.skillsSignal(), skill];
     this.skillsSignal.set(updated);
     this.saveStorage(this.SKILLS_KEY, updated);
+    this._lastLocalWriteAt = Date.now();
     this.syncToCloud();
   }
 
@@ -785,6 +807,7 @@ npm run build
     updated[index] = skill;
     this.skillsSignal.set(updated);
     this.saveStorage(this.SKILLS_KEY, updated);
+    this._lastLocalWriteAt = Date.now();
     this.syncToCloud();
   }
 
@@ -792,6 +815,7 @@ npm run build
     const updated = this.skillsSignal().filter((_, i) => i !== index);
     this.skillsSignal.set(updated);
     this.saveStorage(this.SKILLS_KEY, updated);
+    this._lastLocalWriteAt = Date.now();
     this.syncToCloud();
   }
 
@@ -811,6 +835,7 @@ npm run build
     const updated = [newDoc, ...this.technicalDocsSignal()];
     this.technicalDocsSignal.set(updated);
     this.saveStorage(this.DOCS_KEY, updated);
+    this._lastLocalWriteAt = Date.now();
     this.syncToCloud();
   }
 
@@ -821,6 +846,7 @@ npm run build
     );
     this.technicalDocsSignal.set(updated);
     this.saveStorage(this.DOCS_KEY, updated);
+    this._lastLocalWriteAt = Date.now();
     this.syncToCloud();
   }
 
@@ -828,6 +854,7 @@ npm run build
     const updated = this.technicalDocsSignal().filter(d => d.id !== id);
     this.technicalDocsSignal.set(updated);
     this.saveStorage(this.DOCS_KEY, updated);
+    this._lastLocalWriteAt = Date.now();
     this.syncToCloud();
   }
 
@@ -846,6 +873,7 @@ npm run build
     const updated = [...this.contactLinksSignal(), newLink];
     this.contactLinksSignal.set(updated);
     this.saveStorage(this.CONTACT_LINKS_KEY, updated);
+    this._lastLocalWriteAt = Date.now();
     this.syncToCloud();
   }
 
@@ -855,6 +883,7 @@ npm run build
     );
     this.contactLinksSignal.set(updated);
     this.saveStorage(this.CONTACT_LINKS_KEY, updated);
+    this._lastLocalWriteAt = Date.now();
     this.syncToCloud();
   }
 
@@ -862,6 +891,7 @@ npm run build
     const updated = this.contactLinksSignal().filter(l => l.id !== id);
     this.contactLinksSignal.set(updated);
     this.saveStorage(this.CONTACT_LINKS_KEY, updated);
+    this._lastLocalWriteAt = Date.now();
     this.syncToCloud();
   }
 

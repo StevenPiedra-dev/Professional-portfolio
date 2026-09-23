@@ -22,12 +22,25 @@ export class CloudSyncService {
 
   private saveSubject = new Subject<PortfolioData>();
 
+  /**
+   * Write-lock: true while a save is queued or in-flight.
+   * When true, fetchFromCloud() returns null so it never overwrites local changes.
+   */
+  private _writeLock = false;
+
   constructor() {
-    // Debounce cloud write operations (500ms) to avoid request flooding
+    // Debounce cloud write operations (500ms) to avoid request flooding.
+    // IMPORTANT: executeCloudSave returns an Observable — we must .subscribe()
+    // here so the HTTP PUT actually executes. Previously this was missing,
+    // meaning data was NEVER actually saved to Firebase.
     this.saveSubject.pipe(
       debounceTime(500)
     ).subscribe(data => {
-      this.executeCloudSave(data);
+      this._writeLock = true;
+      this.executeCloudSave(data).subscribe(() => {
+        // Release the write-lock only after the save fully completes
+        this._writeLock = false;
+      });
     });
 
     // Listen to network connectivity
@@ -62,9 +75,22 @@ export class CloudSyncService {
   }
 
   /**
-   * Fetches latest portfolio data from the cloud
+   * Returns true if a save is currently queued or being uploaded.
+   */
+  get hasPendingSave(): boolean {
+    return this._writeLock;
+  }
+
+  /**
+   * Fetches latest portfolio data from the cloud.
+   * Returns null (no-op) if a write is in-flight to prevent overwriting local edits.
    */
   fetchFromCloud(): Observable<PortfolioData | null> {
+    // Guard: never overwrite local data while a save is in progress
+    if (this._writeLock) {
+      return of(null);
+    }
+
     if (typeof navigator !== 'undefined' && !navigator.onLine) {
       this.syncStatus.set('offline');
       return of(null);
@@ -92,16 +118,18 @@ export class CloudSyncService {
   }
 
   /**
-   * Queues an automatic cloud save
+   * Queues an automatic cloud save (debounced 500ms).
    */
   queueSave(data: PortfolioData): void {
     if (!this.isAutoSyncEnabled()) return;
+    // Lock immediately so any concurrent fetch is blocked
+    this._writeLock = true;
     this.syncStatus.set('syncing');
     this.saveSubject.next(data);
   }
 
   /**
-   * Directly executes cloud save
+   * Directly executes a cloud save (PUT). Returns an Observable — caller must subscribe.
    */
   executeCloudSave(data: PortfolioData): Observable<boolean> {
     if (typeof navigator !== 'undefined' && !navigator.onLine) {
