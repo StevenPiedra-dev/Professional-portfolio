@@ -1229,7 +1229,7 @@ export class AboutComponent implements OnInit {
     if (event.companyLogo) return event.companyLogo;
     const company = (event.company || '').toLowerCase();
     if (company.includes('bac')) {
-      return 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" rx="20" fill="%23E11925"/><path d="M25 30h28c8.8 0 16 7.2 16 16s-7.2 16-16 16H25V30zm14 20h14c2.2 0 4-1.8 4-4s-1.8-4-4-4H39v8zm0 10v10h16c3.3 0 6-2.7 6-6s-2.7-6-6-6H39v2z" fill="%23ffffff"/></svg>';
+      return 'assets/BAC.jpg';
     }
     if (company.includes('freelance')) {
       return 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" rx="20" fill="%233B82F6"/><path d="M35 32l-15 18 15 18M65 32l15 18-15 18M54 28l-8 44" stroke="%23ffffff" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>';

@@ -2170,10 +2170,14 @@ export class AdminComponent implements OnInit {
   openEditProjectModal(project: Project) {
     this.editingProject = project;
     this.projectForm = { ...project };
-    this.projectImages = (project.images && project.images.length > 0)
+    this.projectImages = Array.isArray(project.images) && project.images.length > 0
       ? [...project.images]
-      : [project.imageUrl || 'assets/projects/ecommerce.jpg'];
-    this.techsString = (project.technologies || []).join(', ');
+      : (typeof project.images === 'string' && (project.images as string).trim()
+          ? (project.images as string).split(/[,\s]+/)
+          : [project.imageUrl || 'assets/projects/ecommerce.jpg']);
+    this.techsString = Array.isArray(project.technologies)
+      ? project.technologies.join(', ')
+      : (typeof project.technologies === 'string' ? project.technologies : '');
     this.showProjectModal = true;
   }
 

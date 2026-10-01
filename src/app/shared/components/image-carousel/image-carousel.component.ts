@@ -129,8 +129,11 @@ export class ImageCarouselComponent {
   currentIndex: number = 0;
 
   get imageList(): string[] {
-    if (this.images && this.images.length > 0) {
-      return this.images.slice(0, 3);
+    if (this.images) {
+      const arr = Array.isArray(this.images) ? this.images : [this.images];
+      if (arr.length > 0) {
+        return arr.slice(0, 3);
+      }
     }
     return [this.fallbackImage];
   }

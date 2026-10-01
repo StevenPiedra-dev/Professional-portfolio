@@ -926,7 +926,10 @@ export class ProjectsComponent {
   totalTechnologies = computed(() => {
     const techSet = new Set<string>();
     this.allProjects().forEach(p => {
-      (p.technologies || []).forEach(t => {
+      const list = Array.isArray(p.technologies)
+        ? p.technologies
+        : (typeof p.technologies === 'string' ? (p.technologies as string).split(/[,\s]+/) : []);
+      list.forEach(t => {
         if (t && t.trim()) techSet.add(t.trim().toLowerCase());
       });
     });
@@ -973,7 +976,7 @@ export class ProjectsComponent {
       projects = projects.filter(p =>
         p.title.toLowerCase().includes(q) ||
         p.description.toLowerCase().includes(q) ||
-        p.technologies.some(t => t.toLowerCase().includes(q))
+        (Array.isArray(p.technologies) ? p.technologies : []).some(t => t.toLowerCase().includes(q))
       );
     }
 

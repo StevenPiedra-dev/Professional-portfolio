@@ -584,30 +584,77 @@ npm run build
     this.cloudSync.queueSave(fullData);
   }
 
+  private normalizeProject(p: any): Project {
+    let techs: string[] = [];
+    if (Array.isArray(p.technologies)) {
+      techs = p.technologies.map((t: any) => String(t).trim()).filter(Boolean);
+    } else if (typeof p.technologies === 'string') {
+      techs = p.technologies.includes(',')
+        ? p.technologies.split(',').map((t: string) => t.trim()).filter(Boolean)
+        : p.technologies.split(/\s+/).map((t: string) => t.trim()).filter(Boolean);
+    }
+
+    let imgs: string[] = [];
+    if (Array.isArray(p.images)) {
+      imgs = p.images.map((img: any) => String(img).trim()).filter(Boolean);
+    } else if (typeof p.images === 'string') {
+      imgs = p.images.includes(',')
+        ? p.images.split(',').map((img: string) => img.trim()).filter(Boolean)
+        : p.images.split(/\s+/).map((img: string) => img.trim()).filter(Boolean);
+    }
+    if (imgs.length === 0 && p.imageUrl) {
+      imgs = [p.imageUrl];
+    }
+
+    return {
+      ...p,
+      technologies: techs,
+      images: imgs,
+      stars: typeof p.stars === 'number' ? p.stars : (parseInt(p.stars, 10) || 0)
+    };
+  }
+
+  private normalizeBlogPost(b: any): BlogPost {
+    let tags: string[] = [];
+    if (Array.isArray(b.tags)) {
+      tags = b.tags.map((t: any) => String(t).trim()).filter(Boolean);
+    } else if (typeof b.tags === 'string') {
+      tags = b.tags.includes(',')
+        ? b.tags.split(',').map((t: string) => t.trim()).filter(Boolean)
+        : b.tags.split(/\s+/).map((t: string) => t.trim()).filter(Boolean);
+    }
+    return {
+      ...b,
+      tags,
+      likes: typeof b.likes === 'number' ? b.likes : (parseInt(b.likes, 10) || 0)
+    };
+  }
+
   /**
    * Syncs latest data from cloud into local signals and storage.
-   * Triple-guarded against overwriting local CRUD changes:
+   * Multi-device synchronization:
    *  1. fetchFromCloud() returns null immediately if _writeLock is active
-   *  2. We re-check hasPendingSave here in case the GET was already in-flight
-   *  3. We compare timestamps as a last-resort tie-breaker
+   *  2. Ignores fetches initiated prior to a local write to prevent stale overwrite
+   *  3. Normalizes incoming schemas across devices seamlessly
    */
   syncFromCloud(): void {
+    const fetchStartedAt = Date.now();
     this.cloudSync.fetchFromCloud().subscribe(data => {
       // Guard 1: a save was queued or is in-flight — never overwrite local edits
       if (this.cloudSync.hasPendingSave) return;
 
-      if (data && typeof data === 'object') {
-        // Guard 2: local data is newer than cloud snapshot — skip overwrite
-        const cloudTs = data.lastSyncedAt ? new Date(data.lastSyncedAt).getTime() : 0;
-        if (this._lastLocalWriteAt > 0 && this._lastLocalWriteAt > cloudTs) {
-          return;
-        }
+      // Guard 2: local write occurred after this fetch was initiated — skip stale response
+      if (this._lastLocalWriteAt > fetchStartedAt) {
+        return;
+      }
 
+      if (data && typeof data === 'object') {
         // 1. Projects: support array or indexed object from Firebase
         if (data.projects) {
-          const incomingProjects = Array.isArray(data.projects)
+          const rawProjects = Array.isArray(data.projects)
             ? data.projects.filter(p => p != null)
             : Object.values(data.projects).filter((p): p is Project => p != null && typeof p === 'object' && 'title' in p);
+          const incomingProjects = rawProjects.map(p => this.normalizeProject(p));
           if (incomingProjects.length > 0) {
             this.projectsSignal.set(incomingProjects);
             this.saveStorage(this.PROJECTS_KEY, incomingProjects);
@@ -616,9 +663,10 @@ npm run build
 
         // 2. Blog Posts: support array or indexed object
         if (data.blogPosts) {
-          const incomingPosts = Array.isArray(data.blogPosts)
+          const rawPosts = Array.isArray(data.blogPosts)
             ? data.blogPosts.filter(b => b != null)
             : Object.values(data.blogPosts).filter((b): b is BlogPost => b != null && typeof b === 'object' && 'title' in b);
+          const incomingPosts = rawPosts.map(b => this.normalizeBlogPost(b));
           if (incomingPosts.length > 0) {
             this.blogPostsSignal.set(incomingPosts);
             this.saveStorage(this.BLOGS_KEY, incomingPosts);
@@ -694,6 +742,17 @@ npm run build
             this.contactLinksSignal.set(incomingLinks);
             this.saveStorage(this.CONTACT_LINKS_KEY, incomingLinks);
           }
+        }
+
+        // 9. User Votes
+        if (data.userVotes && typeof data.userVotes === 'object') {
+          const currentVotes = this.userVotesSignal();
+          const mergedVotes = {
+            projects: Array.from(new Set([...(currentVotes.projects || []), ...(data.userVotes.projects || [])])),
+            blogs: Array.from(new Set([...(currentVotes.blogs || []), ...(data.userVotes.blogs || [])]))
+          };
+          this.userVotesSignal.set(mergedVotes);
+          this.saveStorage(this.USER_VOTES_KEY, mergedVotes);
         }
       } else if (data === null) {
         // Cloud database is empty; seed it with current local data
