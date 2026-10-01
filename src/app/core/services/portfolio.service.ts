@@ -12,7 +12,7 @@ export class PortfolioService {
   private readonly ABOUT_KEY = 'portfolio_about_v5';
   private readonly SKILLS_KEY = 'portfolio_skills_v5';
   private readonly CONTACT_MSGS_KEY = 'portfolio_contact_msgs_v5';
-  private readonly USER_VOTES_KEY = 'portfolio_user_votes_v5';
+  private readonly USER_VOTES_KEY = 'portfolio_user_votes_v6';
   private readonly DOCS_KEY = 'portfolio_technical_docs_v5';
   private readonly CONTACT_LINKS_KEY = 'portfolio_contact_links_v5';
 
@@ -578,7 +578,6 @@ npm run build
       contactMsgs: this.contactMsgsSignal(),
       technicalDocs: this.technicalDocsSignal(),
       contactLinks: this.contactLinksSignal(),
-      userVotes: this.userVotesSignal(),
       lastSyncedAt: new Date().toISOString()
     };
     this.cloudSync.queueSave(fullData);
@@ -743,17 +742,6 @@ npm run build
             this.saveStorage(this.CONTACT_LINKS_KEY, incomingLinks);
           }
         }
-
-        // 9. User Votes
-        if (data.userVotes && typeof data.userVotes === 'object') {
-          const currentVotes = this.userVotesSignal();
-          const mergedVotes = {
-            projects: Array.from(new Set([...(currentVotes.projects || []), ...(data.userVotes.projects || [])])),
-            blogs: Array.from(new Set([...(currentVotes.blogs || []), ...(data.userVotes.blogs || [])]))
-          };
-          this.userVotesSignal.set(mergedVotes);
-          this.saveStorage(this.USER_VOTES_KEY, mergedVotes);
-        }
       } else if (data === null) {
         // Cloud database is empty; seed it with current local data
         this.syncToCloud();
@@ -823,6 +811,7 @@ npm run build
     });
     this.projectsSignal.set(updatedProjects);
     this.saveStorage(this.PROJECTS_KEY, updatedProjects);
+    this._lastLocalWriteAt = Date.now();
     this.syncToCloud();
 
     return !alreadyStarred;
@@ -888,6 +877,7 @@ npm run build
     });
     this.blogPostsSignal.set(updatedBlogs);
     this.saveStorage(this.BLOGS_KEY, updatedBlogs);
+    this._lastLocalWriteAt = Date.now();
     this.syncToCloud();
 
     return !alreadyLiked;

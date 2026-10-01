@@ -119,7 +119,7 @@ import { ProjectDetailModalComponent } from '../../shared/components/project-det
                 <div class="featured-card-meta">
                   <span class="featured-badge">⭐ Featured</span>
                   <div class="featured-stats">
-                    <span class="stat-chip">⭐ {{ project.stars || 10 }}</span>
+                    <span class="stat-chip">⭐ {{ getProjectStars(project) }}</span>
                   </div>
                 </div>
                 <h3 class="featured-card-title">{{ project.title }}</h3>
@@ -184,8 +184,8 @@ import { ProjectDetailModalComponent } from '../../shared/components/project-det
               </div>
               <div class="card-body">
                 <div class="card-meta-row">
-                  <button class="card-star-btn" (click)="onStarProject($event, project)" title="Star this project">
-                    ⭐ {{ project.stars || 0 }}
+                  <button class="card-star-btn" [class.starred]="isProjectStarred(project.id)" (click)="onStarProject($event, project)" [title]="isProjectStarred(project.id) ? 'Remove star' : 'Star this project'">
+                    {{ isProjectStarred(project.id) ? '⭐' : '☆' }} {{ getProjectStars(project) }}
                   </button>
                 </div>
                 <h3 class="card-title">{{ project.title }}</h3>
@@ -912,6 +912,11 @@ import { ProjectDetailModalComponent } from '../../shared/components/project-det
         transform: scale(1.08);
         box-shadow: 0 0 10px rgba(234, 179, 8, 0.3);
       }
+      &.starred {
+        background: rgba(234, 179, 8, 0.35);
+        border-color: #FACC15;
+        box-shadow: 0 0 12px rgba(234, 179, 8, 0.5);
+      }
     }
   `]
 })
@@ -1031,10 +1036,18 @@ export class ProjectsComponent {
     return icons[(id - 1) % icons.length];
   }
 
+  isProjectStarred(id: number): boolean {
+    return this.portfolioService.isProjectStarred(id);
+  }
+
+  getProjectStars(project: Project): number {
+    const live = this.allProjects().find(p => p.id === project.id);
+    return live ? (live.stars || 0) : (project.stars || 0);
+  }
+
   onStarProject(event: MouseEvent, project: Project): void {
     event.stopPropagation();
     this.portfolioService.starProject(project.id);
-    project.stars = (project.stars || 0) + 1;
   }
 
   onCloseModal(): void {
