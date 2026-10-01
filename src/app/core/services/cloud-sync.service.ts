@@ -28,17 +28,15 @@ export class CloudSyncService {
    */
   private _writeLock = false;
 
+  private eventSource: EventSource | null = null;
+
   constructor() {
-    // Debounce cloud write operations (500ms) to avoid request flooding.
-    // IMPORTANT: executeCloudSave returns an Observable — we must .subscribe()
-    // here so the HTTP PUT actually executes. Previously this was missing,
-    // meaning data was NEVER actually saved to Firebase.
+    // Debounce cloud write operations (250ms) to avoid request flooding during typing
     this.saveSubject.pipe(
-      debounceTime(500)
+      debounceTime(250)
     ).subscribe(data => {
       this._writeLock = true;
       this.executeCloudSave(data).subscribe(() => {
-        // Release the write-lock only after the save fully completes
         this._writeLock = false;
       });
     });
@@ -64,9 +62,10 @@ export class CloudSyncService {
   }
 
   setCloudEndpoint(url: string): void {
-    this.cloudEndpoint.set(url.trim());
+    const cleanUrl = url.trim() || this.DEFAULT_CLOUD_URL;
+    this.cloudEndpoint.set(cleanUrl);
     try {
-      localStorage.setItem(this.STORAGE_CONFIG_KEY, JSON.stringify({ endpoint: url.trim() }));
+      localStorage.setItem(this.STORAGE_CONFIG_KEY, JSON.stringify({ endpoint: cleanUrl }));
     } catch {}
   }
 
@@ -82,7 +81,55 @@ export class CloudSyncService {
   }
 
   /**
-   * Fetches latest portfolio data from the cloud.
+   * Real-time Server-Sent Events (SSE) listener for Firebase Realtime Database.
+   * Enables instantaneous cross-device synchronization in sub-second latency.
+   */
+  listenToCloudStream(onUpdate: (data: PortfolioData) => void): void {
+    if (typeof window === 'undefined' || typeof EventSource === 'undefined') return;
+
+    try {
+      if (this.eventSource) {
+        this.eventSource.close();
+        this.eventSource = null;
+      }
+
+      const streamUrl = this.cloudEndpoint();
+      this.eventSource = new EventSource(streamUrl);
+
+      this.eventSource.addEventListener('put', (event: MessageEvent) => {
+        try {
+          const parsed = JSON.parse(event.data);
+          if (parsed) {
+            if (parsed.path === '/' && parsed.data && typeof parsed.data === 'object') {
+              onUpdate(parsed.data);
+            } else {
+              // Node updated (e.g. /projects or /blogPosts), fetch latest state
+              this.fetchFromCloud().subscribe(fresh => {
+                if (fresh) onUpdate(fresh);
+              });
+            }
+          }
+        } catch (e) {
+          console.warn('SSE message parse warning:', e);
+        }
+      });
+
+      this.eventSource.addEventListener('patch', () => {
+        this.fetchFromCloud().subscribe(fresh => {
+          if (fresh) onUpdate(fresh);
+        });
+      });
+
+      this.eventSource.onerror = () => {
+        // SSE automatically reconnects; fallback polling remains active
+      };
+    } catch (err) {
+      console.warn('Could not establish EventSource stream:', err);
+    }
+  }
+
+  /**
+   * Fetches latest portfolio data from the cloud with cache-busting to bypass browser disk cache.
    * Returns null (no-op) if a write is in-flight to prevent overwriting local edits.
    */
   fetchFromCloud(): Observable<PortfolioData | null> {
@@ -97,9 +144,11 @@ export class CloudSyncService {
     }
 
     this.syncStatus.set('syncing');
-    const endpoint = this.cloudEndpoint();
+    const baseEndpoint = this.cloudEndpoint();
+    const separator = baseEndpoint.includes('?') ? '&' : '?';
+    const endpointWithCacheBuster = `${baseEndpoint}${separator}_nocache=${Date.now()}`;
 
-    return this.http.get<PortfolioData>(endpoint).pipe(
+    return this.http.get<PortfolioData>(endpointWithCacheBuster).pipe(
       map(data => {
         if (data && typeof data === 'object') {
           this.syncStatus.set('synced');
@@ -118,14 +167,21 @@ export class CloudSyncService {
   }
 
   /**
-   * Queues an automatic cloud save (debounced 500ms).
+   * Queues an automatic cloud save.
+   * @param immediate If true, skips debounce and executes immediately (e.g., delete, add, explicit saves).
    */
-  queueSave(data: PortfolioData): void {
+  queueSave(data: PortfolioData, immediate = false): void {
     if (!this.isAutoSyncEnabled()) return;
-    // Lock immediately so any concurrent fetch is blocked
     this._writeLock = true;
     this.syncStatus.set('syncing');
-    this.saveSubject.next(data);
+
+    if (immediate) {
+      this.executeCloudSave(data).subscribe(() => {
+        this._writeLock = false;
+      });
+    } else {
+      this.saveSubject.next(data);
+    }
   }
 
   /**

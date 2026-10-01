@@ -514,40 +514,60 @@ npm run build
   contactMsgsSignal = signal<ContactMessage[]>(this.loadStorage(this.CONTACT_MSGS_KEY, this.initialContactMsgs));
   technicalDocsSignal = signal<TechnicalDoc[]>(this.loadStorage(this.DOCS_KEY, this.initialTechnicalDocs));
   contactLinksSignal = signal<ContactLinkItem[]>(this.loadStorage(this.CONTACT_LINKS_KEY, this.initialContactLinks));
-  userVotesSignal = signal<{ projects: number[]; blogs: number[] }>(this.loadStorage(this.USER_VOTES_KEY, { projects: [], blogs: [] }));
+  // userVotes uses sessionStorage so each browser tab/session has its own independent vote state.
+  // This prevents the "already liked" bug when two tabs share localStorage.
+  userVotesSignal = signal<{ projects: number[]; blogs: number[] }>(this.loadSessionStorage(this.USER_VOTES_KEY, { projects: [], blogs: [] }));
 
   /**
    * Timestamp of the last local write. Used to detect if a cloud fetch is stale
    * (i.e., the local data was modified after the cloud was last updated).
+   * Any incoming cloud data (SSE or poll) older than this timestamp is discarded.
    */
   private _lastLocalWriteAt: number = 0;
+
+  /** Grace period (ms) after a local write during which all incoming cloud data is ignored. */
+  private readonly WRITE_GUARD_MS = 3000;
 
   constructor() {
     // Attempt initial cloud sync on startup
     this.syncFromCloud();
 
-    // Real-time synchronization across devices and browser tabs:
+    // 1. Instant real-time multi-device synchronization via Firebase Server-Sent Events (SSE)
     if (typeof window !== 'undefined') {
-      // 1. Sync immediately when user switches back to this tab or window
+      this.cloudSync.listenToCloudStream((incomingData) => {
+        // Guard: ignore SSE events that arrive within 3 s of a local write
+        // to prevent self-overwrite when our own save triggers an SSE echo.
+        if (this.cloudSync.hasPendingSave) return;
+        if (Date.now() - this._lastLocalWriteAt < this.WRITE_GUARD_MS) return;
+        this.applyIncomingCloudData(incomingData);
+      });
+
+      // 2. Sync immediately when user switches back to this tab or window
       window.addEventListener('focus', () => {
-        if (!this.cloudSync.hasPendingSave) {
+        if (!this.cloudSync.hasPendingSave && Date.now() - this._lastLocalWriteAt >= this.WRITE_GUARD_MS) {
           this.syncFromCloud();
         }
       });
 
-      // 2. Sync when page becomes visible
+      // 3. Sync when page becomes visible
       document.addEventListener('visibilitychange', () => {
-        if (document.visibilityState === 'visible' && !this.cloudSync.hasPendingSave) {
+        if (document.visibilityState === 'visible'
+          && !this.cloudSync.hasPendingSave
+          && Date.now() - this._lastLocalWriteAt >= this.WRITE_GUARD_MS) {
           this.syncFromCloud();
         }
       });
 
-      // 3. Periodic background poll (every 12 seconds) so any changes made on other devices appear automatically
+      // 4. Background polling fallback (every 8 s) when SSE is the primary channel.
+      // 8 s reduces the race window where a poll overwrites an in-flight local write.
       setInterval(() => {
-        if (typeof document !== 'undefined' && document.visibilityState === 'visible' && !this.cloudSync.hasPendingSave) {
+        if (typeof document !== 'undefined'
+          && document.visibilityState === 'visible'
+          && !this.cloudSync.hasPendingSave
+          && Date.now() - this._lastLocalWriteAt >= this.WRITE_GUARD_MS) {
           this.syncFromCloud();
         }
-      }, 12000);
+      }, 8000);
     }
   }
 
@@ -559,16 +579,33 @@ npm run build
     return fallback;
   }
 
+  /** Loads from sessionStorage — scoped to current browser tab/session. */
+  private loadSessionStorage<T>(key: string, fallback: T): T {
+    try {
+      const stored = sessionStorage.getItem(key);
+      if (stored) return JSON.parse(stored);
+    } catch {}
+    return fallback;
+  }
+
   private saveStorage<T>(key: string, value: T): void {
     try {
       localStorage.setItem(key, JSON.stringify(value));
     } catch {}
   }
 
+  /** Saves to sessionStorage — scoped to current browser tab/session. */
+  private saveSessionStorage<T>(key: string, value: T): void {
+    try {
+      sessionStorage.setItem(key, JSON.stringify(value));
+    } catch {}
+  }
+
   /**
    * Dispatches cloud sync for all data
+   * @param immediate If true, skips debounce and writes to Firebase immediately (used on deletes/adds)
    */
-  private syncToCloud(): void {
+  private syncToCloud(immediate = false): void {
     const fullData: PortfolioData = {
       projects: this.projectsSignal(),
       blogPosts: this.blogPostsSignal(),
@@ -580,7 +617,7 @@ npm run build
       contactLinks: this.contactLinksSignal(),
       lastSyncedAt: new Date().toISOString()
     };
-    this.cloudSync.queueSave(fullData);
+    this.cloudSync.queueSave(fullData, immediate);
   }
 
   private normalizeProject(p: any): Project {
@@ -630,6 +667,107 @@ npm run build
   }
 
   /**
+   * Applies incoming cloud data to signals and local storage.
+   * Handles additions, edits, and deletions (including 0 items).
+   */
+  private applyIncomingCloudData(data: PortfolioData): void {
+    if (!data || typeof data !== 'object') return;
+
+    // 1. Projects: support array, sparse object from Firebase, or empty when all deleted
+    let incomingProjects: Project[] = [];
+    if (data.projects) {
+      const rawProjects = Array.isArray(data.projects)
+        ? data.projects.filter(p => p != null)
+        : Object.values(data.projects).filter((p): p is Project => p != null && typeof p === 'object' && 'title' in p);
+      incomingProjects = rawProjects.map(p => this.normalizeProject(p));
+    }
+    this.projectsSignal.set(incomingProjects);
+    this.saveStorage(this.PROJECTS_KEY, incomingProjects);
+
+    // 2. Blog Posts: support array, sparse object from Firebase, or empty when all deleted
+    let incomingPosts: BlogPost[] = [];
+    if (data.blogPosts) {
+      const rawPosts = Array.isArray(data.blogPosts)
+        ? data.blogPosts.filter(b => b != null)
+        : Object.values(data.blogPosts).filter((b): b is BlogPost => b != null && typeof b === 'object' && 'title' in b);
+      incomingPosts = rawPosts.map(b => this.normalizeBlogPost(b));
+    }
+    this.blogPostsSignal.set(incomingPosts);
+    this.saveStorage(this.BLOGS_KEY, incomingPosts);
+
+    // 3. About Info: safely merge preserving timeline and certifications
+    if (data.aboutInfo) {
+      const currentAbout = this.aboutInfoSignal();
+      const mergedAbout: AboutInfo = {
+        ...this.initialAboutInfo,
+        ...data.aboutInfo,
+        timeline: (data.aboutInfo.timeline && Array.isArray(data.aboutInfo.timeline) && data.aboutInfo.timeline.length > 0)
+          ? data.aboutInfo.timeline
+          : (currentAbout.timeline && currentAbout.timeline.length > 0 ? currentAbout.timeline : this.initialAboutInfo.timeline),
+        certifications: (data.aboutInfo.certifications && Array.isArray(data.aboutInfo.certifications) && data.aboutInfo.certifications.length > 0)
+          ? data.aboutInfo.certifications
+          : (currentAbout.certifications && currentAbout.certifications.length > 0 ? currentAbout.certifications : this.initialAboutInfo.certifications),
+        values: (data.aboutInfo.values && Array.isArray(data.aboutInfo.values) && data.aboutInfo.values.length > 0)
+          ? data.aboutInfo.values
+          : (currentAbout.values && currentAbout.values.length > 0 ? currentAbout.values : this.initialAboutInfo.values)
+      };
+      this.aboutInfoSignal.set(mergedAbout);
+      this.saveStorage(this.ABOUT_KEY, mergedAbout);
+    }
+
+    // 4. Skills: support array or indexed object
+    if (data.skills) {
+      const incomingSkills = Array.isArray(data.skills)
+        ? data.skills.filter(s => s != null)
+        : Object.values(data.skills).filter((s): s is Skill => s != null && typeof s === 'object' && 'name' in s);
+      if (incomingSkills.length > 0) {
+        this.skillsSignal.set(incomingSkills);
+        this.saveStorage(this.SKILLS_KEY, incomingSkills);
+      }
+    }
+
+    // 5. Site Metrics
+    if (data.metrics) {
+      this.metricsSignal.set(data.metrics);
+      this.saveStorage(this.METRICS_KEY, data.metrics);
+    }
+
+    // 6. Contact Messages: normalize arrays or indexed objects; clear if empty
+    let incomingMsgs: ContactMessage[] = [];
+    if (data.contactMsgs) {
+      if (Array.isArray(data.contactMsgs)) {
+        incomingMsgs = data.contactMsgs.filter(m => m != null);
+      } else if (typeof data.contactMsgs === 'object') {
+        incomingMsgs = Object.values(data.contactMsgs).filter((m): m is ContactMessage => m != null && typeof m === 'object' && 'email' in m);
+      }
+    }
+    this.contactMsgsSignal.set(incomingMsgs);
+    this.saveStorage(this.CONTACT_MSGS_KEY, incomingMsgs);
+
+    // 7. Technical Docs
+    if (data.technicalDocs) {
+      const incomingDocs = Array.isArray(data.technicalDocs)
+        ? data.technicalDocs.filter(d => d != null)
+        : Object.values(data.technicalDocs).filter((d): d is TechnicalDoc => d != null && typeof d === 'object' && 'title' in d);
+      if (incomingDocs.length > 0) {
+        this.technicalDocsSignal.set(incomingDocs);
+        this.saveStorage(this.DOCS_KEY, incomingDocs);
+      }
+    }
+
+    // 8. Contact Links
+    if (data.contactLinks) {
+      const incomingLinks = Array.isArray(data.contactLinks)
+        ? data.contactLinks.filter(l => l != null)
+        : Object.values(data.contactLinks).filter((l): l is ContactLinkItem => l != null && typeof l === 'object' && 'title' in l);
+      if (incomingLinks.length > 0) {
+        this.contactLinksSignal.set(incomingLinks);
+        this.saveStorage(this.CONTACT_LINKS_KEY, incomingLinks);
+      }
+    }
+  }
+
+  /**
    * Syncs latest data from cloud into local signals and storage.
    * Multi-device synchronization:
    *  1. fetchFromCloud() returns null immediately if _writeLock is active
@@ -648,112 +786,39 @@ npm run build
       }
 
       if (data && typeof data === 'object') {
-        // 1. Projects: support array or indexed object from Firebase
-        if (data.projects) {
-          const rawProjects = Array.isArray(data.projects)
-            ? data.projects.filter(p => p != null)
-            : Object.values(data.projects).filter((p): p is Project => p != null && typeof p === 'object' && 'title' in p);
-          const incomingProjects = rawProjects.map(p => this.normalizeProject(p));
-          if (incomingProjects.length > 0) {
-            this.projectsSignal.set(incomingProjects);
-            this.saveStorage(this.PROJECTS_KEY, incomingProjects);
-          }
-        }
-
-        // 2. Blog Posts: support array or indexed object
-        if (data.blogPosts) {
-          const rawPosts = Array.isArray(data.blogPosts)
-            ? data.blogPosts.filter(b => b != null)
-            : Object.values(data.blogPosts).filter((b): b is BlogPost => b != null && typeof b === 'object' && 'title' in b);
-          const incomingPosts = rawPosts.map(b => this.normalizeBlogPost(b));
-          if (incomingPosts.length > 0) {
-            this.blogPostsSignal.set(incomingPosts);
-            this.saveStorage(this.BLOGS_KEY, incomingPosts);
-          }
-        }
-
-        // 3. About Info: safely merge preserving timeline and certifications
-        if (data.aboutInfo) {
-          const currentAbout = this.aboutInfoSignal();
-          const mergedAbout: AboutInfo = {
-            ...this.initialAboutInfo,
-            ...data.aboutInfo,
-            timeline: (data.aboutInfo.timeline && Array.isArray(data.aboutInfo.timeline) && data.aboutInfo.timeline.length > 0)
-              ? data.aboutInfo.timeline
-              : (currentAbout.timeline && currentAbout.timeline.length > 0 ? currentAbout.timeline : this.initialAboutInfo.timeline),
-            certifications: (data.aboutInfo.certifications && Array.isArray(data.aboutInfo.certifications) && data.aboutInfo.certifications.length > 0)
-              ? data.aboutInfo.certifications
-              : (currentAbout.certifications && currentAbout.certifications.length > 0 ? currentAbout.certifications : this.initialAboutInfo.certifications),
-            values: (data.aboutInfo.values && Array.isArray(data.aboutInfo.values) && data.aboutInfo.values.length > 0)
-              ? data.aboutInfo.values
-              : (currentAbout.values && currentAbout.values.length > 0 ? currentAbout.values : this.initialAboutInfo.values)
-          };
-          this.aboutInfoSignal.set(mergedAbout);
-          this.saveStorage(this.ABOUT_KEY, mergedAbout);
-        }
-
-        // 4. Skills: support array or indexed object
-        if (data.skills) {
-          const incomingSkills = Array.isArray(data.skills)
-            ? data.skills.filter(s => s != null)
-            : Object.values(data.skills).filter((s): s is Skill => s != null && typeof s === 'object' && 'name' in s);
-          if (incomingSkills.length > 0) {
-            this.skillsSignal.set(incomingSkills);
-            this.saveStorage(this.SKILLS_KEY, incomingSkills);
-          }
-        }
-
-        // 5. Site Metrics
-        if (data.metrics) {
-          this.metricsSignal.set(data.metrics);
-          this.saveStorage(this.METRICS_KEY, data.metrics);
-        }
-
-        // 6. Contact Messages: normalize arrays or indexed objects; clear if empty
-        let incomingMsgs: ContactMessage[] = [];
-        if (data.contactMsgs) {
-          if (Array.isArray(data.contactMsgs)) {
-            incomingMsgs = data.contactMsgs.filter(m => m != null);
-          } else if (typeof data.contactMsgs === 'object') {
-            incomingMsgs = Object.values(data.contactMsgs).filter((m): m is ContactMessage => m != null && typeof m === 'object' && 'email' in m);
-          }
-        }
-        this.contactMsgsSignal.set(incomingMsgs);
-        this.saveStorage(this.CONTACT_MSGS_KEY, incomingMsgs);
-
-        // 7. Technical Docs
-        if (data.technicalDocs) {
-          const incomingDocs = Array.isArray(data.technicalDocs)
-            ? data.technicalDocs.filter(d => d != null)
-            : Object.values(data.technicalDocs).filter((d): d is TechnicalDoc => d != null && typeof d === 'object' && 'title' in d);
-          if (incomingDocs.length > 0) {
-            this.technicalDocsSignal.set(incomingDocs);
-            this.saveStorage(this.DOCS_KEY, incomingDocs);
-          }
-        }
-
-        // 8. Contact Links
-        if (data.contactLinks) {
-          const incomingLinks = Array.isArray(data.contactLinks)
-            ? data.contactLinks.filter(l => l != null)
-            : Object.values(data.contactLinks).filter((l): l is ContactLinkItem => l != null && typeof l === 'object' && 'title' in l);
-          if (incomingLinks.length > 0) {
-            this.contactLinksSignal.set(incomingLinks);
-            this.saveStorage(this.CONTACT_LINKS_KEY, incomingLinks);
-          }
-        }
+        this.applyIncomingCloudData(data);
       } else if (data === null) {
         // Cloud database is empty; seed it with current local data
-        this.syncToCloud();
+        this.syncToCloud(true);
       }
     });
   }
 
   /**
-   * Manually pushes all current local data to the cloud
+   * Restores initial showcase data (projects, blogs, skills, about) and pushes to cloud.
+   */
+  restoreInitialShowcaseData(): void {
+    this.projectsSignal.set(this.initialProjects);
+    this.saveStorage(this.PROJECTS_KEY, this.initialProjects);
+
+    this.blogPostsSignal.set(this.initialBlogPosts);
+    this.saveStorage(this.BLOGS_KEY, this.initialBlogPosts);
+
+    this.skillsSignal.set(this.initialSkills);
+    this.saveStorage(this.SKILLS_KEY, this.initialSkills);
+
+    this.aboutInfoSignal.set(this.initialAboutInfo);
+    this.saveStorage(this.ABOUT_KEY, this.initialAboutInfo);
+
+    this._lastLocalWriteAt = Date.now();
+    this.syncToCloud(true);
+  }
+
+  /**
+   * Manually pushes all current local data to the cloud immediately
    */
   forcePushToCloud(): void {
-    this.syncToCloud();
+    this.syncToCloud(true);
   }
 
   // --- Projects Methods ---
@@ -784,7 +849,8 @@ npm run build
     this.projectsSignal.set(updated);
     this.saveStorage(this.PROJECTS_KEY, updated);
     this._lastLocalWriteAt = Date.now();
-    this.syncToCloud();
+    // immediate=true: bypass debounce so the cloud is updated before the next poll
+    this.syncToCloud(true);
   }
 
   isProjectStarred(id: number): boolean {
@@ -800,7 +866,7 @@ npm run build
 
     const updatedVotes = { ...votes, projects: updatedStarred };
     this.userVotesSignal.set(updatedVotes);
-    this.saveStorage(this.USER_VOTES_KEY, updatedVotes);
+    this.saveSessionStorage(this.USER_VOTES_KEY, updatedVotes);
 
     const updatedProjects = this.projectsSignal().map(p => {
       if (p.id === id) {
@@ -851,7 +917,8 @@ npm run build
     this.saveStorage(this.BLOGS_KEY, updated);
     this.updateMetrics({ articlesPublished: updated.length });
     this._lastLocalWriteAt = Date.now();
-    this.syncToCloud();
+    // immediate=true: bypass debounce so the cloud is updated before the next poll
+    this.syncToCloud(true);
   }
 
   isBlogLiked(id: number): boolean {
@@ -867,7 +934,7 @@ npm run build
 
     const updatedVotes = { ...votes, blogs: updatedLiked };
     this.userVotesSignal.set(updatedVotes);
-    this.saveStorage(this.USER_VOTES_KEY, updatedVotes);
+    this.saveSessionStorage(this.USER_VOTES_KEY, updatedVotes);
 
     const updatedBlogs = this.blogPostsSignal().map(b => {
       if (b.id === id) {
